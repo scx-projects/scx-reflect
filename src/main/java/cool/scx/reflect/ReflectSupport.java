@@ -1,0 +1,415 @@
+package cool.scx.reflect;
+
+import java.lang.reflect.*;
+import java.util.*;
+
+import static cool.scx.reflect.AccessModifier.*;
+import static cool.scx.reflect.ClassKind.*;
+import static java.util.Collections.addAll;
+
+/// 内部构建辅助类
+final class ReflectSupport {
+
+    public static TypeInfo _findComponentType(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+        // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
+        var componentType = switch (type) {
+            case Class<?> c -> c.componentType();
+            case GenericArrayType g -> g.getGenericComponentType();
+            default -> throw new IllegalArgumentException("unsupported type: " + type);
+        };
+        return ScxReflect.getType(componentType, bindings);
+    }
+
+    public static Class<?> _findRawClass(Type type) {
+        // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
+        return switch (type) {
+            case Class<?> c -> c;
+            // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
+            case ParameterizedType p -> (Class<?>) p.getRawType();
+            default -> throw new IllegalArgumentException("unsupported type: " + type);
+        };
+    }
+
+    public static Map<TypeVariable<?>, TypeInfo> _findBindings(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+        // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
+        switch (type) {
+            // Class 没有 bindings 的概念
+            case Class<?> _ -> {
+                return Map.of();
+            }
+            // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
+            case ParameterizedType p -> {
+                //这里我们假设 typeParameters 和 actualTypeArguments 的长度和顺序是完全一一对应的
+                var typeParameters = ((Class<?>) p.getRawType()).getTypeParameters();
+                var actualTypeArguments = p.getActualTypeArguments();
+
+                var result = new LinkedHashMap<TypeVariable<?>, TypeInfo>();
+
+                for (int i = 0; i < typeParameters.length; i = i + 1) {
+                    var typeParameter = typeParameters[i];
+                    var actualTypeArgument = actualTypeArguments[i];
+                    var typeInfo = ScxReflect.getType(actualTypeArgument, bindings);
+                    result.put(typeParameter, typeInfo);
+                }
+                // 保持不可变
+                return Map.copyOf(result);
+            }
+            default -> throw new IllegalArgumentException("unsupported type: " + type);
+        }
+    }
+
+    public static AccessModifier _findAccessModifier(Set<AccessFlag> accessFlags) {
+        if (accessFlags.contains(AccessFlag.PUBLIC)) {
+            return PUBLIC;
+        }
+        if (accessFlags.contains(AccessFlag.PROTECTED)) {
+            return PROTECTED;
+        }
+        if (accessFlags.contains(AccessFlag.PRIVATE)) {
+            return PRIVATE;
+        }
+        return PACKAGE_PRIVATE;
+    }
+
+    public static ClassKind _findClassKind(Class<?> rawClass, Set<AccessFlag> accessFlags) {
+        if (accessFlags.contains(AccessFlag.ANNOTATION)) {
+            return ANNOTATION;
+        }
+        if (accessFlags.contains(AccessFlag.INTERFACE)) {
+            return INTERFACE;
+        }
+        if (accessFlags.contains(AccessFlag.ENUM)) {
+            return ENUM;
+        }
+        if (rawClass.isRecord()) {
+            return RECORD;
+        }
+        return CLASS;
+    }
+
+    public static ClassInfo _findSuperClass(Class<?> rawClass, Map<TypeVariable<?>, TypeInfo> bindings) {
+        var superClass = rawClass.getGenericSuperclass();
+        // superClass 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
+        // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
+        return superClass != null ? (ClassInfo) ScxReflect.getType(superClass, bindings) : null;
+    }
+
+    public static ClassInfo[] _findInterfaces(Class<?> rawClass, Map<TypeVariable<?>, TypeInfo> bindings) {
+        var interfaces = rawClass.getGenericInterfaces();
+        // interface 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
+        // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
+        var result = new ClassInfo[interfaces.length];
+        for (int i = 0; i < interfaces.length; i = i + 1) {
+            result[i] = (ClassInfo) ScxReflect.getType(interfaces[i], bindings);
+        }
+        return result;
+    }
+
+    public static ConstructorInfo[] _findConstructors(Class<?> rawClass, ClassInfo classInfo) {
+        var constructors = rawClass.getDeclaredConstructors();
+        var result = new ConstructorInfo[constructors.length];
+        for (int i = 0; i < constructors.length; i = i + 1) {
+            result[i] = new ConstructorInfoImpl(constructors[i], classInfo);
+        }
+        return result;
+    }
+
+    public static FieldInfo[] _findFields(Class<?> rawClass, ClassInfo classInfo) {
+        var fields = rawClass.getDeclaredFields();
+        var result = new FieldInfo[fields.length];
+        for (int i = 0; i < fields.length; i = i + 1) {
+            result[i] = new FieldInfoImpl(fields[i], classInfo);
+        }
+        return result;
+    }
+
+    /// 获取当前 ClassInfo 的所有方法 (不包括桥接方法)
+    public static MethodInfo[] _findMethods(Class<?> rawClass, ClassInfo classInfo) {
+        var methods = rawClass.getDeclaredMethods();
+        var list = new ArrayList<MethodInfo>();
+        for (var method : methods) {
+            //过滤掉桥接方法, 因为我们几乎用不到
+            if (!method.isBridge()) {
+                list.add(new MethodInfoImpl(method, classInfo));
+            }
+        }
+        return list.toArray(MethodInfo[]::new);
+    }
+
+    public static ClassInfo[] _findAllSuperClasses(ClassInfo classInfo) {
+        var allSuperClasses = new ArrayList<ClassInfo>();
+        var superClass = classInfo.superClass();
+        while (superClass != null) {
+            allSuperClasses.add(superClass);
+            superClass = superClass.superClass();
+        }
+        return allSuperClasses.toArray(ClassInfo[]::new);
+    }
+
+    public static ClassInfo[] _findAllInterfaces(ClassInfo classInfo) {
+        // 这里需要 进行广度遍历 (BFS), 但是我们不使用传统的队列方式,
+        // 而是使用 类似递归深度遍历 + 行转列, 
+        // 主要原因是为了 通过调用 父接口的 allInterfaces 来激活整个继承链条的 allInterfaces 缓存
+        // 此方法不处理 环形依赖, 因为 java 的编译期 已经保证了不可能存在 环形依赖
+
+        // 1, 使用 LinkedHashSet 保证去重
+        var result = new LinkedHashSet<ClassInfo>();
+        // 2, 先将当前层级接口添加进去
+        var interfaces = classInfo.interfaces();
+        addAll(result, interfaces);
+        // 3, 获取所有父接口的 所有接口, 同时找出最大的层级深度 
+        var temp = new ClassInfo[interfaces.length][];
+        int maxDepth = 0;
+        for (int i = 0; i < interfaces.length; i = i + 1) {
+            temp[i] = interfaces[i].allInterfaces();
+            if (temp[i].length > maxDepth) {
+                maxDepth = temp[i].length;
+            }
+        }
+
+        // 4, 按 "行转列" 遍历, 逐层加入接口
+        for (int level = 0; level < maxDepth; level = level + 1) {
+            for (var classInfos : temp) {
+                if (level < classInfos.length) {
+                    result.add(classInfos[level]);
+                }
+            }
+        }
+
+        return result.toArray(ClassInfo[]::new);
+    }
+
+    public static ParameterInfo[] _findParameters(Executable rawExecutable, ExecutableInfo executableInfo) {
+        var parameters = rawExecutable.getParameters();
+        var result = new ParameterInfo[parameters.length];
+        for (int i = 0; i < parameters.length; i = i + 1) {
+            result[i] = new ParameterInfoImpl(parameters[i], executableInfo);
+        }
+        return result;
+    }
+
+    /// 寻找 无参构造函数 (不支持成员类)
+    public static ConstructorInfo _findDefaultConstructor(ClassInfo classInfo) {
+        for (var constructor : classInfo.constructors()) {
+            if (constructor.parameters().length == 0) {
+                return constructor;
+            }
+        }
+        return null;
+    }
+
+    /// 寻找 Record 规范构造参数
+    public static ConstructorInfo _findRecordConstructor(ClassInfo classInfo) {
+        if (classInfo.classKind() != RECORD) {
+            return null;
+        }
+        var recordComponentTypes = _getRecordComponentsTypes(classInfo);
+        for (var constructor : classInfo.constructors()) {
+            // 判断参数类型是否匹配
+            var matched = _hasSameParameterTypes(constructor, recordComponentTypes);
+            if (matched) {
+                return constructor;
+            }
+        }
+        return null;
+    }
+
+    private static TypeInfo[] _getRecordComponentsTypes(ClassInfo classInfo) {
+        var recordComponents = classInfo.rawClass().getRecordComponents();
+        var result = new TypeInfo[recordComponents.length];
+        for (int i = 0; i < recordComponents.length; i = i + 1) {
+            // 这里因为是 后于 constructors 调用的 
+            // 所以 理论上 所有的 recordComponent 都能够再 TYPE_CACHE 中直接找到对应的 TypeInfo
+            result[i] = ScxReflect.getType(recordComponents[i].getGenericType(), classInfo.bindings());
+        }
+        return result;
+    }
+
+    private static boolean _hasSameParameterTypes(ExecutableInfo constructorInfo, TypeInfo[] types) {
+        if (constructorInfo.parameters().length != types.length) {
+            return false;
+        }
+        var p1 = constructorInfo.parameters();
+        for (int i = 0; i < p1.length; i = i + 1) {
+            var p1Type = p1[i].parameterType();
+            var p2Type = types[i];
+            if (p1Type != p2Type) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static FieldInfo[] _findAllFields(ClassInfo classInfo) {
+        //此处不直接使用 allSuperClasses 循环添加, 也是为了 尝试激活整个链路的 allFields 缓存
+        var allFieldInfos = new ArrayList<FieldInfo>();
+        //添加自己的字段
+        addAll(allFieldInfos, classInfo.fields());
+        //添加父级的字段 (如果有父级的话)
+        var superClass = classInfo.superClass();
+        if (superClass != null) {
+            addAll(allFieldInfos, superClass.allFields());
+        }
+        return allFieldInfos.toArray(FieldInfo[]::new);
+    }
+
+    public static MethodInfo _findSuperMethod(MethodInfo methodInfo) {
+        //静态方法不存在被重写的可能, 所以不可能拥有 superMethod 
+        if (methodInfo.isStatic()) {
+            return null;
+        }
+
+        // 先查找父类
+        for (var i : methodInfo.declaringClass().allSuperClasses()) {
+            for (var superMethod : i.methods()) {
+                //静态方法 和 final 不可能是 superMethod 直接跳过
+                if (superMethod.isStatic() || superMethod.isFinal()) {
+                    continue;
+                }
+                // 只查找第一次匹配的方法
+                if (isOverride(methodInfo, superMethod)) {
+                    return superMethod;
+                }
+            }
+        }
+
+        // 再查找接口
+        for (var i : methodInfo.declaringClass().allInterfaces()) {
+            for (var superMethod : i.methods()) {
+                //静态方法 和 final 不可能是 superMethod 直接跳过
+                if (superMethod.isStatic() || superMethod.isFinal()) {
+                    continue;
+                }
+                // 只查找第一次匹配的方法
+                if (isOverride(methodInfo, superMethod)) {
+                    return superMethod;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static MethodInfo[] _findAllMethods(ClassInfo classInfo) {
+        var result = new ArrayList<MethodInfo>();
+        var overridden = new HashSet<MethodInfo>();
+
+        // 1. 添加当前类声明的方法，并记录它们覆盖的父方法
+        for (var method : classInfo.methods()) {
+            result.add(method);
+            if (method.superMethod() != null) {
+                overridden.add(method.superMethod());
+            }
+        }
+
+        // 2. 添加父类的方法（排除被覆盖的）
+        var superClass = classInfo.superClass();
+        if (superClass != null) {
+            for (var m : superClass.allMethods()) {
+                if (!overridden.contains(m)) {
+                    result.add(m);
+                }
+            }
+        }
+
+        // 3. 添加接口的方法（排除被覆盖的）
+        var interfaces = classInfo.interfaces();
+        for (var i : interfaces) {
+            for (var m : i.allMethods()) {
+                if (!overridden.contains(m)) {
+                    result.add(m);
+                }
+            }
+        }
+        return result.toArray(MethodInfo[]::new);
+    }
+
+    /// 返回当前 ClassInfo 所表示的枚举类的 "真实" 枚举类型。
+    /// 在 Java 中, 枚举常量有时会被编译成枚举的匿名子类 (匿名枚举类),
+    /// 这时直接拿匿名类的 ClassInfo 并不能代表真正的枚举类型.
+    /// 该方法的作用是:
+    /// - 如果 classInfo 表示的是匿名枚举类, 则返回它的父类 (即真正的枚举类).
+    /// - 如果 classInfo 是普通的枚举类, 则直接返回它自身.
+    /// - 如果不是枚举类，则返回 null.
+    /// 这样在处理枚举类型时，可以统一拿到 "真实" 的枚举声明类, 方便后续处理.
+    ///
+    /// @param classInfo 需要判断的 ClassInfo 对象
+    /// @return 真实的枚举类型 ClassInfo，或者非枚举时返回 null
+    public static ClassInfo _findEnumClass(ClassInfo classInfo) {
+        if (classInfo.classKind() == ENUM) {
+            return classInfo.isAnonymousClass() ? classInfo.superClass() : classInfo;
+        } else {
+            return null;
+        }
+    }
+
+    /// 判断是否为重写方法
+    private static boolean isOverride(MethodInfo methodInfo, MethodInfo superMethod) {
+        // 此方法 的判断逻辑实际上是建立在 methodInfo 和 superMethod 一定是 同一条继承链上的,
+        // 这样我们能够减少一些判断, 因为 java 在编译期间已经帮我们处理了 比如返回值 此处是无需判断的
+        // 注意 在调用此方法之前 我们已经 进行了一部分 检查 比如 static 和 final 检查 此处不再进行
+
+        // 访问权限判断方面, 只需要排除 superMethod 是 private 的情况, 原因如下:
+        // 1. private 方法不参与继承, 子类定义同名 private 方法不会构成重写, 而是隐藏 (new) 方法.
+        // 2. 其他访问权限 (public、protected、package-private) 重写时, Java 编译器会强制要求子类方法的访问权限
+        //    不能比父类方法更严格, 因此不会出现访问权限不合法的重写.
+        // 3. 因此, 除了排除 private, 访问权限的合法性已经由编译器保障, 不需要在运行时额外判断。
+        if (superMethod.accessModifier() == PRIVATE) {
+            return false;
+        }
+        // 特例 : 需要注意的是, package-private 方法只能被同包内子类重写, 跨包时无法访问和重写.
+        // 所以这里需要额外判断一下 包名
+        if (superMethod.accessModifier() == PACKAGE_PRIVATE) {
+            var p1 = superMethod.declaringClass().rawClass().getPackageName();
+            var p2 = methodInfo.declaringClass().rawClass().getPackageName();
+            // 不同包, 不能算重写
+            if (!p1.equals(p2)) {
+                return false;
+            }
+        }
+
+        // 判断方法名
+        if (!superMethod.name().equals(methodInfo.name())) {
+            return false;
+        }
+        // 方法签名也必须相同 不过此处判断的实际上是泛型擦除后的类型 
+        return _hasSameParameterErasedTypes(methodInfo, superMethod);
+    }
+
+    /// 判断的实际上是泛型擦除后的参数类型是否相同
+    private static boolean _hasSameParameterErasedTypes(ExecutableInfo rootMethod, ExecutableInfo candidateMethod) {
+        if (candidateMethod.parameters().length != rootMethod.parameters().length) {
+            return false;
+        }
+        var p1 = rootMethod.parameters();
+        var p2 = candidateMethod.parameters();
+        for (int i = 0; i < p1.length; i = i + 1) {
+            var p1Type = p1[i].parameterType();
+            var p2Type = p2[i].parameterType();
+            //这里 因为 java 泛型擦除 机制我们不能 比较带泛型的参数 而是应该比较 泛型擦除后的类型
+            if (!_hasSameErasedType(p1Type, p2Type)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /// 判断两个 TypeInfo 在擦除类型之后是否相同
+    public static boolean _hasSameErasedType(TypeInfo t1, TypeInfo t2) {
+        //如果二者都是 classInfo 那么我们需要拿到对应的 rawClass 进行比较
+        if (t1 instanceof ClassInfo c1 && t2 instanceof ClassInfo c2) {
+            return c1.rawClass() == c2.rawClass();
+        }
+        //数组我们需要递归判断 组件类型
+        if (t1 instanceof ArrayTypeInfo a1 && t2 instanceof ArrayTypeInfo a2) {
+            // 这里不需要考虑协变 因为 java 方法参数实际上不支持协变覆盖
+            return _hasSameErasedType(a1.componentType(), a2.componentType());
+        }
+        //基本类型 判断 class 足够
+        if (t1 instanceof PrimitiveTypeInfo p1 && t2 instanceof PrimitiveTypeInfo p2) {
+            return p1.primitiveClass() == p2.primitiveClass();
+        }
+        // 如果以上分支全部 没走 说明 二者连 类型 都不匹配 直接返回 false
+        return false;
+    }
+
+}
