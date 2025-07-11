@@ -1,7 +1,10 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.TypeVariable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 /// TypeBindingsImpl
 ///
@@ -88,6 +91,20 @@ final class TypeBindingsImpl implements TypeBindings {
         int result = Arrays.hashCode(typeVariables);
         result = 31 * result + Arrays.hashCode(typeInfos);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        var sb = new StringBuilder();
+        sb.append('{');
+        for (int i = 0; i < typeVariables.length; i = i + 1) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append(typeVariables[i].getName()).append('=').append(typeInfos[i]);
+        }
+        sb.append('}');
+        return sb.toString();
     }
 
     private static final class TypeBindingsIterator implements Iterator<Map.Entry<TypeVariable<?>, TypeInfo>> {
