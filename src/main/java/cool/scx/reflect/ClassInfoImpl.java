@@ -2,7 +2,6 @@ package cool.scx.reflect;
 
 import cool.scx.reflect.ScxReflect.TypeKey;
 
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
