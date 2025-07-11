@@ -10,11 +10,6 @@ import java.util.Map;
 /// @version 0.0.1
 public sealed interface ClassInfo extends TypeInfo, AccessModifierOwner, AnnotatedElementInfo permits ClassInfoImpl {
 
-    //***************** TypeInfo **************
-
-    /// 原始类
-    Class<?> rawClass();
-
     /// 泛型绑定
     Map<TypeVariable<?>, TypeInfo> bindings();
 

@@ -2,6 +2,7 @@ package cool.scx.reflect;
 
 import cool.scx.reflect.ScxReflect.TypeKey;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
@@ -51,7 +52,15 @@ final class ClassInfoImpl implements ClassInfo {
     private MethodInfo[] allMethods;
     private ClassInfo enumClass;
 
-    ClassInfoImpl(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public ClassInfoImpl(Class<?> type, Map<TypeVariable<?>, TypeInfo> bindings) {
+        this((Type) type, bindings);
+    }
+
+    public ClassInfoImpl(ParameterizedType type, Map<TypeVariable<?>, TypeInfo> bindings) {
+        this((Type) type, bindings);
+    }
+
+    private ClassInfoImpl(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
         TYPE_CACHE.put(new TypeKey(type, bindings), this);
 
         this.rawClass = _findRawClass(type);
