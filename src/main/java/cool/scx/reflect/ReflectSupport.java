@@ -1,16 +1,20 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
+import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 import static java.util.Collections.addAll;
 
 /// 内部构建辅助类
 final class ReflectSupport {
 
-    public static TypeInfo _findComponentType(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public static TypeInfo _findComponentType(Type type, TypeBindings bindings) {
         // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
         var componentType = switch (type) {
             case Class<?> c -> c.componentType();
@@ -18,6 +22,16 @@ final class ReflectSupport {
             default -> throw new IllegalArgumentException("unsupported type: " + type);
         };
         return ScxReflect.getType(componentType, bindings);
+    }
+
+    public static Class<?> _findArrayRawClass(Type type, TypeInfo componentType) {
+        // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
+        return switch (type) {
+            case Class<?> c -> c;
+            // 泛型数组我们尝试使用已经具象化的类型来处理
+            case GenericArrayType g -> Array.newInstance(componentType.rawClass(), 0).getClass();
+            default -> throw new IllegalArgumentException("unsupported type: " + type);
+        };
     }
 
     public static Class<?> _findRawClass(Type type) {
@@ -30,29 +44,25 @@ final class ReflectSupport {
         };
     }
 
-    public static Map<TypeVariable<?>, TypeInfo> _findBindings(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public static TypeBindings _findBindings(Type type, TypeBindings bindings) {
         // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
         switch (type) {
             // Class 没有 bindings 的概念
             case Class<?> _ -> {
-                return Map.of();
+                return EMPTY_BINDINGS;
             }
             // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
             case ParameterizedType p -> {
                 //这里我们假设 typeParameters 和 actualTypeArguments 的长度和顺序是完全一一对应的
-                var typeParameters = ((Class<?>) p.getRawType()).getTypeParameters();
+                var typeVariables = ((Class<?>) p.getRawType()).getTypeParameters();
                 var actualTypeArguments = p.getActualTypeArguments();
-
-                var result = new LinkedHashMap<TypeVariable<?>, TypeInfo>();
-
-                for (int i = 0; i < typeParameters.length; i = i + 1) {
-                    var typeParameter = typeParameters[i];
+                var typeInfos = new TypeInfo[actualTypeArguments.length];
+                for (int i = 0; i < actualTypeArguments.length; i = i + 1) {
                     var actualTypeArgument = actualTypeArguments[i];
                     var typeInfo = ScxReflect.getType(actualTypeArgument, bindings);
-                    result.put(typeParameter, typeInfo);
+                    typeInfos[i] = typeInfo;
                 }
-                // 保持不可变
-                return Map.copyOf(result);
+                return new TypeBindingsImpl(typeVariables, typeInfos);
             }
             default -> throw new IllegalArgumentException("unsupported type: " + type);
         }
@@ -87,14 +97,14 @@ final class ReflectSupport {
         return CLASS;
     }
 
-    public static ClassInfo _findSuperClass(Class<?> rawClass, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public static ClassInfo _findSuperClass(Class<?> rawClass, TypeBindings bindings) {
         var superClass = rawClass.getGenericSuperclass();
         // superClass 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
         return superClass != null ? (ClassInfo) ScxReflect.getType(superClass, bindings) : null;
     }
 
-    public static ClassInfo[] _findInterfaces(Class<?> rawClass, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public static ClassInfo[] _findInterfaces(Class<?> rawClass, TypeBindings bindings) {
         var interfaces = rawClass.getGenericInterfaces();
         // interface 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
@@ -386,30 +396,11 @@ final class ReflectSupport {
             var p1Type = p1[i].parameterType();
             var p2Type = p2[i].parameterType();
             //这里 因为 java 泛型擦除 机制我们不能 比较带泛型的参数 而是应该比较 泛型擦除后的类型
-            if (!_hasSameErasedType(p1Type, p2Type)) {
+            if (p1Type.rawClass() != p2Type.rawClass()) {
                 return false;
             }
         }
         return true;
-    }
-
-    /// 判断两个 TypeInfo 在擦除类型之后是否相同
-    public static boolean _hasSameErasedType(TypeInfo t1, TypeInfo t2) {
-        //如果二者都是 classInfo 那么我们需要拿到对应的 rawClass 进行比较
-        if (t1 instanceof ClassInfo c1 && t2 instanceof ClassInfo c2) {
-            return c1.rawClass() == c2.rawClass();
-        }
-        //数组我们需要递归判断 组件类型
-        if (t1 instanceof ArrayTypeInfo a1 && t2 instanceof ArrayTypeInfo a2) {
-            // 这里不需要考虑协变 因为 java 方法参数实际上不支持协变覆盖
-            return _hasSameErasedType(a1.componentType(), a2.componentType());
-        }
-        //基本类型 判断 class 足够
-        if (t1 instanceof PrimitiveTypeInfo p1 && t2 instanceof PrimitiveTypeInfo p2) {
-            return p1.primitiveClass() == p2.primitiveClass();
-        }
-        // 如果以上分支全部 没走 说明 二者连 类型 都不匹配 直接返回 false
-        return false;
     }
 
 }

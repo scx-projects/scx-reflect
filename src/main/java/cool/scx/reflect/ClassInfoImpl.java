@@ -3,8 +3,7 @@ package cool.scx.reflect;
 import cool.scx.reflect.ScxReflect.TypeKey;
 
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.util.Map;
+import java.util.Arrays;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
@@ -18,7 +17,7 @@ final class ClassInfoImpl implements ClassInfo {
 
     // TypeInfo
     private final Class<?> rawClass;
-    private final Map<TypeVariable<?>, TypeInfo> bindings;
+    private final TypeBindings bindings;
 
     // 类的基本信息
     private final String name;
@@ -51,7 +50,7 @@ final class ClassInfoImpl implements ClassInfo {
     private MethodInfo[] allMethods;
     private ClassInfo enumClass;
 
-    ClassInfoImpl(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    ClassInfoImpl(Type type, TypeBindings bindings) {
         TYPE_CACHE.put(new TypeKey(type, bindings), this);
 
         this.rawClass = _findRawClass(type);
@@ -76,7 +75,7 @@ final class ClassInfoImpl implements ClassInfo {
     }
 
     @Override
-    public Map<TypeVariable<?>, TypeInfo> bindings() {
+    public TypeBindings bindings() {
         return bindings;
     }
 
@@ -135,7 +134,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (interfaces == null) {
             interfaces = _findInterfaces(this.rawClass, this.bindings);
         }
-        return interfaces;
+        return interfaces.clone();
     }
 
     @Override
@@ -143,7 +142,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (constructors == null) {
             constructors = _findConstructors(this.rawClass, this);
         }
-        return constructors;
+        return constructors.clone();
     }
 
     @Override
@@ -151,7 +150,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (fields == null) {
             fields = _findFields(this.rawClass, this);
         }
-        return fields;
+        return fields.clone();
     }
 
     @Override
@@ -159,7 +158,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (methods == null) {
             methods = _findMethods(this.rawClass, this);
         }
-        return methods;
+        return methods.clone();
     }
 
     @Override
@@ -167,7 +166,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (allSuperClasses == null) {
             allSuperClasses = _findAllSuperClasses(this);
         }
-        return allSuperClasses;
+        return allSuperClasses.clone();
     }
 
     @Override
@@ -175,7 +174,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (allInterfaces == null) {
             allInterfaces = _findAllInterfaces(this);
         }
-        return allInterfaces;
+        return allInterfaces.clone();
     }
 
     @Override
@@ -199,7 +198,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (allFields == null) {
             allFields = _findAllFields(this);
         }
-        return allFields;
+        return allFields.clone();
     }
 
     @Override
@@ -207,7 +206,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (allMethods == null) {
             allMethods = _findAllMethods(this);
         }
-        return allMethods;
+        return allMethods.clone();
     }
 
     @Override
@@ -222,7 +221,7 @@ final class ClassInfoImpl implements ClassInfo {
     public String toString() {
         //todo 匿名内部类会变成空字符串
         var shortName = rawClass.getSimpleName();
-        var typeArgs = bindings.values().stream().map(TypeInfo::toString).toList();
+        var typeArgs = Arrays.stream(bindings.typeInfos()).map(TypeInfo::toString).toList();
         if (typeArgs.isEmpty()) {
             return shortName;
         } else {
