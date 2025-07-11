@@ -134,7 +134,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (interfaces == null) {
             interfaces = _findInterfaces(this.rawClass, this.bindings);
         }
-        return interfaces;
+        return interfaces.clone();
     }
 
     @Override
@@ -142,7 +142,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (constructors == null) {
             constructors = _findConstructors(this.rawClass, this);
         }
-        return constructors;
+        return constructors.clone();
     }
 
     @Override
@@ -150,7 +150,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (fields == null) {
             fields = _findFields(this.rawClass, this);
         }
-        return fields;
+        return fields.clone();
     }
 
     @Override
@@ -158,7 +158,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (methods == null) {
             methods = _findMethods(this.rawClass, this);
         }
-        return methods;
+        return methods.clone();
     }
 
     @Override
@@ -166,7 +166,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (allSuperClasses == null) {
             allSuperClasses = _findAllSuperClasses(this);
         }
-        return allSuperClasses;
+        return allSuperClasses.clone();
     }
 
     @Override
@@ -174,7 +174,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (allInterfaces == null) {
             allInterfaces = _findAllInterfaces(this);
         }
-        return allInterfaces;
+        return allInterfaces.clone();
     }
 
     @Override
@@ -198,7 +198,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (allFields == null) {
             allFields = _findAllFields(this);
         }
-        return allFields;
+        return allFields.clone();
     }
 
     @Override
@@ -206,7 +206,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (allMethods == null) {
             allMethods = _findAllMethods(this);
         }
-        return allMethods;
+        return allMethods.clone();
     }
 
     @Override

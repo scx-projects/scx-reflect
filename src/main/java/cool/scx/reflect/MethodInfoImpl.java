@@ -90,7 +90,7 @@ final class MethodInfoImpl implements MethodInfo {
 
     @Override
     public ParameterInfo[] parameters() {
-        return parameters;
+        return parameters.clone();
     }
 
     @Override

@@ -42,7 +42,7 @@ final class ConstructorInfoImpl implements ConstructorInfo {
 
     @Override
     public ParameterInfo[] parameters() {
-        return parameters;
+        return parameters.clone();
     }
 
     @Override

@@ -55,12 +55,12 @@ final class TypeBindingsImpl implements TypeBindings {
 
     @Override
     public TypeVariable<?>[] typeVariables() {
-        return typeVariables;
+        return typeVariables.clone();
     }
 
     @Override
     public TypeInfo[] typeInfos() {
-        return typeInfos;
+        return typeInfos.clone();
     }
 
     @Override
