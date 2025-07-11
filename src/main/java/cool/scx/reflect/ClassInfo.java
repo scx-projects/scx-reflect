@@ -11,7 +11,7 @@ import java.util.Map;
 public sealed interface ClassInfo extends TypeInfo, AccessModifierOwner, AnnotatedElementInfo permits ClassInfoImpl {
 
     /// 泛型绑定
-    Map<TypeVariable<?>, TypeInfo> bindings();
+    TypeBindings bindings();
 
     //************ 类的基本信息 ***************
 

@@ -3,8 +3,7 @@ package cool.scx.reflect;
 import cool.scx.reflect.ScxReflect.TypeKey;
 
 import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.util.Map;
+import java.util.Arrays;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
@@ -18,7 +17,7 @@ final class ClassInfoImpl implements ClassInfo {
 
     // TypeInfo
     private final Class<?> rawClass;
-    private final Map<TypeVariable<?>, TypeInfo> bindings;
+    private final TypeBindings bindings;
 
     // 类的基本信息
     private final String name;
@@ -51,7 +50,7 @@ final class ClassInfoImpl implements ClassInfo {
     private MethodInfo[] allMethods;
     private ClassInfo enumClass;
 
-    ClassInfoImpl(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    ClassInfoImpl(Type type, TypeBindings bindings) {
         TYPE_CACHE.put(new TypeKey(type, bindings), this);
 
         this.rawClass = _findRawClass(type);
@@ -76,7 +75,7 @@ final class ClassInfoImpl implements ClassInfo {
     }
 
     @Override
-    public Map<TypeVariable<?>, TypeInfo> bindings() {
+    public TypeBindings bindings() {
         return bindings;
     }
 
@@ -222,7 +221,7 @@ final class ClassInfoImpl implements ClassInfo {
     public String toString() {
         //todo 匿名内部类会变成空字符串
         var shortName = rawClass.getSimpleName();
-        var typeArgs = bindings.values().stream().map(TypeInfo::toString).toList();
+        var typeArgs = Arrays.stream(bindings.typeInfos()).map(TypeInfo::toString).toList();
         if (typeArgs.isEmpty()) {
             return shortName;
         } else {
