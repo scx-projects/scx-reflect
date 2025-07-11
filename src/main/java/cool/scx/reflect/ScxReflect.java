@@ -4,12 +4,14 @@ import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
+
 /// 非线程安全
 public final class ScxReflect {
 
     static final Map<TypeKey, TypeInfo> TYPE_CACHE = new HashMap<>();
 
-    static TypeInfo getType(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    static TypeInfo getType(Type type, TypeBindings bindings) {
         var t = TYPE_CACHE.get(new TypeKey(type, bindings));
         if (t != null) {
             return t;
@@ -49,11 +51,11 @@ public final class ScxReflect {
     }
 
     public static TypeInfo getType(Type type) {
-        return getType(type, Map.of());
+        return getType(type, EMPTY_BINDINGS);
     }
 
     /// 单纯使用 Type 是不准确的, 会丢失泛型 这里使用 type 和 bindings 的组合
-    record TypeKey(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    record TypeKey(Type type, TypeBindings bindings) {
 
     }
 

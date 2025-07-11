@@ -1,16 +1,20 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
+import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 import static java.util.Collections.addAll;
 
 /// 内部构建辅助类
 final class ReflectSupport {
 
-    public static TypeInfo _findComponentType(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public static TypeInfo _findComponentType(Type type, TypeBindings bindings) {
         // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
         var componentType = switch (type) {
             case Class<?> c -> c.componentType();
@@ -40,29 +44,25 @@ final class ReflectSupport {
         };
     }
 
-    public static Map<TypeVariable<?>, TypeInfo> _findBindings(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public static TypeBindings _findBindings(Type type, TypeBindings bindings) {
         // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
         switch (type) {
             // Class 没有 bindings 的概念
             case Class<?> _ -> {
-                return Map.of();
+                return EMPTY_BINDINGS;
             }
             // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
             case ParameterizedType p -> {
                 //这里我们假设 typeParameters 和 actualTypeArguments 的长度和顺序是完全一一对应的
-                var typeParameters = ((Class<?>) p.getRawType()).getTypeParameters();
+                var typeVariables = ((Class<?>) p.getRawType()).getTypeParameters();
                 var actualTypeArguments = p.getActualTypeArguments();
-
-                var result = new LinkedHashMap<TypeVariable<?>, TypeInfo>();
-
-                for (int i = 0; i < typeParameters.length; i = i + 1) {
-                    var typeParameter = typeParameters[i];
+                var typeInfos = new TypeInfo[actualTypeArguments.length];
+                for (int i = 0; i < actualTypeArguments.length; i = i + 1) {
                     var actualTypeArgument = actualTypeArguments[i];
                     var typeInfo = ScxReflect.getType(actualTypeArgument, bindings);
-                    result.put(typeParameter, typeInfo);
+                    typeInfos[i] = typeInfo;
                 }
-                // 保持不可变
-                return Map.copyOf(result);
+                return new TypeBindingsImpl(typeVariables, typeInfos);
             }
             default -> throw new IllegalArgumentException("unsupported type: " + type);
         }
@@ -97,14 +97,14 @@ final class ReflectSupport {
         return CLASS;
     }
 
-    public static ClassInfo _findSuperClass(Class<?> rawClass, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public static ClassInfo _findSuperClass(Class<?> rawClass, TypeBindings bindings) {
         var superClass = rawClass.getGenericSuperclass();
         // superClass 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
         return superClass != null ? (ClassInfo) ScxReflect.getType(superClass, bindings) : null;
     }
 
-    public static ClassInfo[] _findInterfaces(Class<?> rawClass, Map<TypeVariable<?>, TypeInfo> bindings) {
+    public static ClassInfo[] _findInterfaces(Class<?> rawClass, TypeBindings bindings) {
         var interfaces = rawClass.getGenericInterfaces();
         // interface 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全

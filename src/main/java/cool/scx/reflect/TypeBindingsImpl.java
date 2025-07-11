@@ -5,6 +5,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+/// TypeBindingsImpl
+///
+/// @author scx567888
+/// @version 0.0.1
 final class TypeBindingsImpl implements TypeBindings {
 
     static final TypeBindings EMPTY_BINDINGS = new TypeBindingsImpl(new TypeVariable[0], new TypeInfo[0]);
@@ -56,6 +60,16 @@ final class TypeBindingsImpl implements TypeBindings {
     @Override
     public TypeInfo[] typeInfos() {
         return typeInfos;
+    }
+
+    @Override
+    public int size() {
+        return typeVariables.length;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return size() == 0;
     }
 
     @Override
