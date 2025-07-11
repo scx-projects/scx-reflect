@@ -52,15 +52,7 @@ final class ClassInfoImpl implements ClassInfo {
     private MethodInfo[] allMethods;
     private ClassInfo enumClass;
 
-    public ClassInfoImpl(Class<?> type, Map<TypeVariable<?>, TypeInfo> bindings) {
-        this((Type) type, bindings);
-    }
-
-    public ClassInfoImpl(ParameterizedType type, Map<TypeVariable<?>, TypeInfo> bindings) {
-        this((Type) type, bindings);
-    }
-
-    private ClassInfoImpl(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
+    ClassInfoImpl(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
         TYPE_CACHE.put(new TypeKey(type, bindings), this);
 
         this.rawClass = _findRawClass(type);

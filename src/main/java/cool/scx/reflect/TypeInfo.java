@@ -49,4 +49,7 @@ import java.lang.reflect.WildcardType;
 /// @version 0.0.1
 public sealed interface TypeInfo permits ArrayTypeInfo, ClassInfo, PrimitiveTypeInfo {
 
+    /// 获取原始类
+    Class<?> rawClass();
+
 }

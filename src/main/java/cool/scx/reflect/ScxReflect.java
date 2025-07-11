@@ -21,10 +21,10 @@ public final class ScxReflect {
             if (c.isPrimitive()) {
                 return new PrimitiveTypeInfoImpl(c);
             }
-            return new ClassInfoImpl(type, bindings);
+            return new ClassInfoImpl(c, bindings);
         }
-        if (type instanceof ParameterizedType) {
-            return new ClassInfoImpl(type, bindings);
+        if (type instanceof ParameterizedType p) {
+            return new ClassInfoImpl(p, bindings);
         }
         if (type instanceof GenericArrayType g) {
             return new ArrayTypeInfoImpl(g, bindings);
