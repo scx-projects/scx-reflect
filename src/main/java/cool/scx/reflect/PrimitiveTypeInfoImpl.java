@@ -12,23 +12,23 @@ import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
 /// @version 0.0.1
 final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
 
-    private final Class<?> primitiveClass;
+    private final Class<?> rawClass;
 
     PrimitiveTypeInfoImpl(Class<?> primitiveClass) {
         TYPE_CACHE.put(new TypeKey(primitiveClass, Map.of()), this);
 
-        // 我们假设 此处 primitiveClass 已经是过滤后的
-        this.primitiveClass = primitiveClass;
+        // 我们假设 此处 primitiveClass 已经是 Class.isPrimitive 过滤后的
+        this.rawClass = primitiveClass;
     }
 
     @Override
-    public Class<?> primitiveClass() {
-        return primitiveClass;
+    public Class<?> rawClass() {
+        return rawClass;
     }
 
     @Override
     public String toString() {
-        return primitiveClass.getName();
+        return rawClass.getName();
     }
 
 }
