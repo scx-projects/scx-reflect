@@ -20,6 +20,16 @@ final class ReflectSupport {
         return ScxReflect.getType(componentType, bindings);
     }
 
+    public static Class<?> _findArrayRawClass(Type type, TypeInfo componentType) {
+        // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
+        return switch (type) {
+            case Class<?> c -> c;
+            // 泛型数组我们尝试使用已经具象化的类型来处理
+            case GenericArrayType g -> Array.newInstance(componentType.rawClass(), 0).getClass();
+            default -> throw new IllegalArgumentException("unsupported type: " + type);
+        };
+    }
+
     public static Class<?> _findRawClass(Type type) {
         // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
         return switch (type) {
@@ -386,30 +396,11 @@ final class ReflectSupport {
             var p1Type = p1[i].parameterType();
             var p2Type = p2[i].parameterType();
             //这里 因为 java 泛型擦除 机制我们不能 比较带泛型的参数 而是应该比较 泛型擦除后的类型
-            if (!_hasSameErasedType(p1Type, p2Type)) {
+            if (p1Type.rawClass() != p2Type.rawClass()) {
                 return false;
             }
         }
         return true;
-    }
-
-    /// 判断两个 TypeInfo 在擦除类型之后是否相同
-    public static boolean _hasSameErasedType(TypeInfo t1, TypeInfo t2) {
-        //如果二者都是 classInfo 那么我们需要拿到对应的 rawClass 进行比较
-        if (t1 instanceof ClassInfo c1 && t2 instanceof ClassInfo c2) {
-            return c1.rawClass() == c2.rawClass();
-        }
-        //数组我们需要递归判断 组件类型
-        if (t1 instanceof ArrayTypeInfo a1 && t2 instanceof ArrayTypeInfo a2) {
-            // 这里不需要考虑协变 因为 java 方法参数实际上不支持协变覆盖
-            return _hasSameErasedType(a1.componentType(), a2.componentType());
-        }
-        //基本类型 判断 class 足够
-        if (t1 instanceof PrimitiveTypeInfo p1 && t2 instanceof PrimitiveTypeInfo p2) {
-            return p1.primitiveClass() == p2.primitiveClass();
-        }
-        // 如果以上分支全部 没走 说明 二者连 类型 都不匹配 直接返回 false
-        return false;
     }
 
 }

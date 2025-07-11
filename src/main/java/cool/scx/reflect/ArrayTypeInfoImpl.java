@@ -6,6 +6,7 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Map;
 
+import static cool.scx.reflect.ReflectSupport._findArrayRawClass;
 import static cool.scx.reflect.ReflectSupport._findComponentType;
 import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
 
@@ -15,13 +16,20 @@ import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
 /// @version 0.0.1
 final class ArrayTypeInfoImpl implements ArrayTypeInfo {
 
+    private final Class<?> rawClass;
     private final TypeInfo componentType;
 
     ArrayTypeInfoImpl(Type type, Map<TypeVariable<?>, TypeInfo> bindings) {
         TYPE_CACHE.put(new TypeKey(type, bindings), this);
 
-        // 我们假设 此处 type 已经是过滤后的
+        // 我们假设 此处 type 已经是 Class.isArray 过滤后的 或 GenericArrayType 
         this.componentType = _findComponentType(type, bindings);
+        this.rawClass = _findArrayRawClass(type, this.componentType);
+    }
+
+    @Override
+    public Class<?> rawClass() {
+        return rawClass;
     }
 
     @Override
