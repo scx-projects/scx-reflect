@@ -17,7 +17,7 @@ import java.lang.reflect.WildcardType;
 /// 为了构建一个更纯粹, 符合类型理论的类型体系, 本抽象不再包含 TypeVariable 和 WildcardType,
 /// 只保留如下三种核心子类型:
 ///
-/// 1. {@link ClassInfo} (具象类型)
+/// 1. {@link DeclaredTypeInfo} (声明类型)
 ///
 ///    表示一个已具体化的, 完整的具体类型, 它更接近理论层面中定义的「Type」.
 ///    例如: `String`, `List<String>`, `Map<Integer, String>` 等.
@@ -35,7 +35,7 @@ import java.lang.reflect.WildcardType;
 ///
 ///  简要对照 Java 反射中的 Type 实现 :
 ///
-/// {@link Class} / {@link ParameterizedType}  -->  {@link ClassInfo}
+/// {@link Class} / {@link ParameterizedType}  -->  {@link DeclaredTypeInfo}
 ///
 /// {@link Class} (isPrimitive = true)  -->  {@link PrimitiveTypeInfo}
 ///
@@ -47,7 +47,7 @@ import java.lang.reflect.WildcardType;
 ///
 /// @author scx567888
 /// @version 0.0.1
-public sealed interface TypeInfo permits ArrayTypeInfo, ClassInfo, PrimitiveTypeInfo {
+public sealed interface TypeInfo permits DeclaredTypeInfo, PrimitiveTypeInfo, ArrayTypeInfo {
 
     /// 获取原始类
     Class<?> rawClass();
