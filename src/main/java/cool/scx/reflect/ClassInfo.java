@@ -77,8 +77,8 @@ public sealed interface ClassInfo extends TypeInfo, AccessModifierOwner, Annotat
 
     /// 枚举类型 (如果类是枚举的 匿名子类 的话, 可以正确获取到真正的枚举类型)
     ClassInfo enumClass();
-    
-    /// 组件列表 (如果是 Record 类型)
+
+    /// Record 组件列表 (如果是 Record 类型)
     RecordComponentInfo[] recordComponents();
 
     /// 返回指定类型的 父级 ClassInfo 支持常规类,抽象类,接口
