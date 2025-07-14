@@ -75,7 +75,7 @@ public sealed interface ClassInfo extends TypeInfo, AccessModifierOwner, Annotat
     /// 等价于程序员在该类实例中最终能访问到的所有方法列表.
     MethodInfo[] allMethods();
 
-    /// 枚举类型 (如果类是匿名枚举类的话可以正确获取到真正的枚举类型)
+    /// 枚举类型 (如果类是枚举的 匿名子类 的话, 可以正确获取到真正的枚举类型)
     ClassInfo enumClass();
     
     /// 组件列表 (如果是 Record 类型)

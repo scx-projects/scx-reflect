@@ -36,4 +36,9 @@ final class RecordComponentInfoImpl implements RecordComponentInfo {
         return recordComponentType;
     }
 
+    @Override
+    public String toString() {
+        return recordComponentType.toString() + " " + name;
+    }
+
 }
