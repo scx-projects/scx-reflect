@@ -45,10 +45,12 @@ final class ClassInfoImpl implements ClassInfo {
     private ClassInfo[] allSuperClasses;
     private ClassInfo[] allInterfaces;
     private ConstructorInfo defaultConstructor;
+    private boolean recordConstructorLoaded;
     private ConstructorInfo recordConstructor;
     private FieldInfo[] allFields;
     private MethodInfo[] allMethods;
     private ClassInfo enumClass;
+    private RecordComponentInfo[] recordComponents;
 
     ClassInfoImpl(Type type, TypeBindings bindings) {
         TYPE_CACHE.put(new TypeKey(type, bindings), this);
@@ -187,8 +189,9 @@ final class ClassInfoImpl implements ClassInfo {
 
     @Override
     public ConstructorInfo recordConstructor() {
-        if (recordConstructor == null) {
+        if (!recordConstructorLoaded) {
             recordConstructor = _findRecordConstructor(this);
+            recordConstructorLoaded = true;
         }
         return recordConstructor;
     }
@@ -215,6 +218,14 @@ final class ClassInfoImpl implements ClassInfo {
             enumClass = _findEnumClass(this);
         }
         return enumClass;
+    }
+
+    @Override
+    public RecordComponentInfo[] recordComponents() {
+        if (recordComponents == null) {
+            recordComponents = _findRecordComponents(this);
+        }
+        return recordComponents;
     }
 
     @Override
