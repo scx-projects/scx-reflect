@@ -7,7 +7,7 @@ import java.lang.reflect.AnnotatedElement;
 ///
 /// @author scx567888
 /// @version 0.0.1
-public sealed interface AnnotatedElementInfo permits ClassInfo, MemberInfo, ParameterInfo {
+public sealed interface AnnotatedElementInfo permits ClassInfo, MemberInfo, ParameterInfo, RecordComponentInfo {
 
     /// annotatedElement
     AnnotatedElement annotatedElement();

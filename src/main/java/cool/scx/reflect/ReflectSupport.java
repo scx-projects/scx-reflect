@@ -225,12 +225,12 @@ final class ReflectSupport {
     }
 
     private static TypeInfo[] _getRecordComponentsTypes(ClassInfo classInfo) {
-        var recordComponents = classInfo.rawClass().getRecordComponents();
+        var recordComponents = classInfo.recordComponents();
         var result = new TypeInfo[recordComponents.length];
         for (int i = 0; i < recordComponents.length; i = i + 1) {
             // 这里因为是 后于 constructors 调用的 
             // 所以 理论上 所有的 recordComponent 都能够再 TYPE_CACHE 中直接找到对应的 TypeInfo
-            result[i] = ScxReflect.getType(recordComponents[i].getGenericType(), classInfo.bindings());
+            result[i] = recordComponents[i].recordComponentType();
         }
         return result;
     }
@@ -350,6 +350,18 @@ final class ReflectSupport {
         } else {
             return null;
         }
+    }
+
+    public static RecordComponentInfo[] _findRecordComponents(ClassInfo classInfo) {
+        if (classInfo.classKind() == RECORD) {
+            var recordComponents = classInfo.rawClass().getRecordComponents();
+            var result = new RecordComponentInfo[recordComponents.length];
+            for (int i = 0; i < recordComponents.length; i = i + 1) {
+                result[i] = new RecordComponentInfoImpl(recordComponents[i], classInfo);
+            }
+            return result;
+        }
+        return new RecordComponentInfo[0];
     }
 
     /// 判断是否为重写方法

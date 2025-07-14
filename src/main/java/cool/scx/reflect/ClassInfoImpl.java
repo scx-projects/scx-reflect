@@ -44,11 +44,14 @@ final class ClassInfoImpl implements ClassInfo {
     //快捷属性
     private ClassInfo[] allSuperClasses;
     private ClassInfo[] allInterfaces;
+    private boolean defaultConstructorLoaded;
     private ConstructorInfo defaultConstructor;
+    private boolean recordConstructorLoaded;
     private ConstructorInfo recordConstructor;
     private FieldInfo[] allFields;
     private MethodInfo[] allMethods;
     private ClassInfo enumClass;
+    private RecordComponentInfo[] recordComponents;
 
     ClassInfoImpl(Type type, TypeBindings bindings) {
         TYPE_CACHE.put(new TypeKey(type, bindings), this);
@@ -179,16 +182,18 @@ final class ClassInfoImpl implements ClassInfo {
 
     @Override
     public ConstructorInfo defaultConstructor() {
-        if (defaultConstructor == null) {
+        if (!defaultConstructorLoaded) {
             defaultConstructor = _findDefaultConstructor(this);
+            defaultConstructorLoaded = true;
         }
         return defaultConstructor;
     }
 
     @Override
     public ConstructorInfo recordConstructor() {
-        if (recordConstructor == null) {
+        if (!recordConstructorLoaded) {
             recordConstructor = _findRecordConstructor(this);
+            recordConstructorLoaded = true;
         }
         return recordConstructor;
     }
@@ -215,6 +220,14 @@ final class ClassInfoImpl implements ClassInfo {
             enumClass = _findEnumClass(this);
         }
         return enumClass;
+    }
+
+    @Override
+    public RecordComponentInfo[] recordComponents() {
+        if (recordComponents == null) {
+            recordComponents = _findRecordComponents(this);
+        }
+        return recordComponents.clone();
     }
 
     @Override
