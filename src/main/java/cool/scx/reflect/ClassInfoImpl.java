@@ -225,7 +225,7 @@ final class ClassInfoImpl implements ClassInfo {
         if (recordComponents == null) {
             recordComponents = _findRecordComponents(this);
         }
-        return recordComponents;
+        return recordComponents.clone();
     }
 
     @Override
