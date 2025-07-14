@@ -44,6 +44,7 @@ final class ClassInfoImpl implements ClassInfo {
     //快捷属性
     private ClassInfo[] allSuperClasses;
     private ClassInfo[] allInterfaces;
+    private boolean defaultConstructorLoaded;
     private ConstructorInfo defaultConstructor;
     private boolean recordConstructorLoaded;
     private ConstructorInfo recordConstructor;
@@ -181,8 +182,9 @@ final class ClassInfoImpl implements ClassInfo {
 
     @Override
     public ConstructorInfo defaultConstructor() {
-        if (defaultConstructor == null) {
+        if (!defaultConstructorLoaded) {
             defaultConstructor = _findDefaultConstructor(this);
+            defaultConstructorLoaded = true;
         }
         return defaultConstructor;
     }
