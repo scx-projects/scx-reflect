@@ -44,8 +44,8 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
 
     @Override
     public int hashCode() {
-        int result = Objects.hashCode(getClass());
-        result = 31 * result + Objects.hashCode(componentType);
+        int result = ArrayTypeInfoImpl.class.hashCode();
+        result = 31 * result + componentType.hashCode();
         return result;
     }
 

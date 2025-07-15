@@ -35,8 +35,8 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
 
     @Override
     public int hashCode() {
-        int result = Objects.hashCode(getClass());
-        result = 31 * result + Objects.hashCode(rawClass);
+        int result = PrimitiveTypeInfoImpl.class.hashCode();
+        result = 31 * result + rawClass.hashCode();
         return result;
     }
 

@@ -239,8 +239,8 @@ final class ClassInfoImpl implements ClassInfo {
 
     @Override
     public int hashCode() {
-        int result = Objects.hashCode(rawClass);
-        result = 31 * result + Objects.hashCode(bindings);
+        int result = rawClass.hashCode();
+        result = 31 * result + bindings.hashCode();
         return result;
     }
 
