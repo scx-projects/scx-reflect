@@ -232,7 +232,7 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public boolean equals(Object object) {
         if (object instanceof ClassInfoImpl classInfo) {
-            return Objects.equals(rawClass, classInfo.rawClass) && Objects.equals(bindings, classInfo.bindings);
+            return rawClass == classInfo.rawClass && Objects.equals(bindings, classInfo.bindings);
         }
         return false;
     }
