@@ -14,7 +14,7 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
     private final Class<?> rawClass;
 
     PrimitiveTypeInfoImpl(Class<?> primitiveClass) {
-        TYPE_CACHE.put(new TypeKey(primitiveClass, EMPTY_BINDINGS), this);
+        TYPE_CACHE.put(TypeKey.createTypeKey(primitiveClass, EMPTY_BINDINGS), this);
 
         // 我们假设 此处 primitiveClass 已经是 Class.isPrimitive 过滤后的
         this.rawClass = primitiveClass;
