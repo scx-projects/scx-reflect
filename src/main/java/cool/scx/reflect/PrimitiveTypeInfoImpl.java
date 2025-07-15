@@ -25,6 +25,9 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
 
     @Override
     public boolean equals(Object object) {
+        if (object == this) {
+            return true;
+        }
         if (object instanceof PrimitiveTypeInfoImpl that) {
             return rawClass == that.rawClass;
         }

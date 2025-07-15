@@ -1,7 +1,6 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.Type;
-import java.util.Objects;
 
 import static cool.scx.reflect.ReflectSupport._findArrayRawClass;
 import static cool.scx.reflect.ReflectSupport._findComponentType;
@@ -36,8 +35,11 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
 
     @Override
     public boolean equals(Object object) {
+        if (object == this) {
+            return true;
+        }
         if (object instanceof ArrayTypeInfoImpl that) {
-            return Objects.equals(componentType, that.componentType);
+            return componentType.equals(that.componentType);
         }
         return false;
     }
