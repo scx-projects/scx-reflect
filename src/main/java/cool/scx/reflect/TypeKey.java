@@ -13,12 +13,12 @@ final class TypeKey {
     private final Class<?> rawClass;
     private final TypeBindings bindings;
 
-    TypeKey(Class<?> rawClass, TypeBindings bindings) {
+    private TypeKey(Class<?> rawClass, TypeBindings bindings) {
         this.rawClass = rawClass;
         this.bindings = bindings;
     }
 
-    TypeKey(TypeInfo typeInfo) {
+    private TypeKey(TypeInfo typeInfo) {
         switch (typeInfo) {
             case ClassInfo classInfo -> {
                 this.rawClass = classInfo.rawClass();
