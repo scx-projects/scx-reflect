@@ -12,7 +12,7 @@ public final class ScxReflect {
     static final Map<TypeKey, TypeInfo> TYPE_CACHE = new HashMap<>();
 
     static TypeInfo getType(Type type, TypeBindings bindings) {
-        var t = TYPE_CACHE.get(new TypeKey(type, bindings));
+        var t = TYPE_CACHE.get(TypeKey.createTypeKey(type, bindings));
         if (t != null) {
             return t;
         }

@@ -17,7 +17,7 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     private final TypeInfo componentType;
 
     ArrayTypeInfoImpl(Type type, TypeBindings bindings) {
-        TYPE_CACHE.put(new TypeKey(type, bindings), this);
+        TYPE_CACHE.put(TypeKey.createTypeKey(type, bindings), this);
 
         // 我们假设 此处 type 已经是 Class.isArray 过滤后的 或 GenericArrayType 
         this.componentType = _findComponentType(type, bindings);
