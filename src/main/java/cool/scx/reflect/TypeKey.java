@@ -2,7 +2,6 @@ package cool.scx.reflect;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
-import java.util.Objects;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
