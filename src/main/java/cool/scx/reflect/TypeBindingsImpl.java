@@ -80,6 +80,9 @@ final class TypeBindingsImpl implements TypeBindings {
 
     @Override
     public boolean equals(Object object) {
+        if (object == this) {
+            return true;
+        }
         if (object instanceof TypeBindingsImpl entries) {
             return Arrays.equals(typeVariables, entries.typeVariables) && Arrays.equals(typeInfos, entries.typeInfos);
         }
