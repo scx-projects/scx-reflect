@@ -13,6 +13,28 @@ final class TypeKey {
     private final Class<?> rawClass;
     private final TypeBindings bindings;
 
+    TypeKey(Class<?> rawClass, TypeBindings bindings) {
+        this.rawClass = rawClass;
+        this.bindings = bindings;
+    }
+
+    TypeKey(TypeInfo typeInfo) {
+        switch (typeInfo) {
+            case ClassInfo classInfo -> {
+                this.rawClass = classInfo.rawClass();
+                this.bindings = classInfo.bindings();
+            }
+            case ArrayTypeInfo arrayTypeInfo -> {
+                this.rawClass = arrayTypeInfo.rawClass();
+                this.bindings = EMPTY_BINDINGS;
+            }
+            case PrimitiveTypeInfo primitiveTypeInfo -> {
+                this.rawClass = primitiveTypeInfo.rawClass();
+                this.bindings = EMPTY_BINDINGS;
+            }
+        }
+    }
+
     public static TypeKey createTypeKey(Type type, TypeBindings bindings) {
         if (type instanceof Class<?> c) {
             return new TypeKey(c, EMPTY_BINDINGS);
@@ -36,28 +58,6 @@ final class TypeKey {
             return createTypeKey(w.getUpperBounds()[0], bindings);
         }
         throw new IllegalArgumentException("unsupported type: " + type);
-    }
-
-    TypeKey(Class<?> rawClass, TypeBindings bindings) {
-        this.rawClass = rawClass;
-        this.bindings = bindings;
-    }
-
-    TypeKey(TypeInfo typeInfo) {
-        switch (typeInfo) {
-            case ClassInfo classInfo -> {
-                this.rawClass = classInfo.rawClass();
-                this.bindings = classInfo.bindings();
-            }
-            case ArrayTypeInfo arrayTypeInfo -> {
-                this.rawClass = arrayTypeInfo.rawClass();
-                this.bindings = EMPTY_BINDINGS;
-            }
-            case PrimitiveTypeInfo primitiveTypeInfo -> {
-                this.rawClass = primitiveTypeInfo.rawClass();
-                this.bindings = EMPTY_BINDINGS;
-            }
-        }
     }
 
     public Type rawClass() {

@@ -53,7 +53,7 @@ final class ClassInfoImpl implements ClassInfo {
     private RecordComponentInfo[] recordComponents;
 
     ClassInfoImpl(Type type, TypeBindings bindings) {
-        TYPE_CACHE.put(TypeKey.createTypeKey(type,bindings), this);
+        TYPE_CACHE.put(TypeKey.createTypeKey(type, bindings), this);
 
         this.rawClass = _findRawClass(type);
         this.bindings = _findBindings(type, bindings);
