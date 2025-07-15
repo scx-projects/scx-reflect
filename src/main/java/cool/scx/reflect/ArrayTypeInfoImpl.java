@@ -1,8 +1,7 @@
 package cool.scx.reflect;
 
-import cool.scx.reflect.ScxReflect.TypeKey;
-
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 import static cool.scx.reflect.ReflectSupport._findArrayRawClass;
 import static cool.scx.reflect.ReflectSupport._findComponentType;
@@ -33,6 +32,21 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     @Override
     public TypeInfo componentType() {
         return componentType;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof ArrayTypeInfoImpl that) {
+            return Objects.equals(componentType, that.componentType);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(getClass());
+        result = 31 * result + Objects.hashCode(componentType);
+        return result;
     }
 
     @Override
