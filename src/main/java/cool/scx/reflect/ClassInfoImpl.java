@@ -1,9 +1,8 @@
 package cool.scx.reflect;
 
-import cool.scx.reflect.ScxReflect.TypeKey;
-
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
@@ -228,6 +227,21 @@ final class ClassInfoImpl implements ClassInfo {
             recordComponents = _findRecordComponents(this);
         }
         return recordComponents.clone();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof ClassInfoImpl classInfo) {
+            return Objects.equals(rawClass, classInfo.rawClass) && Objects.equals(bindings, classInfo.bindings);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(rawClass);
+        result = 31 * result + Objects.hashCode(bindings);
+        return result;
     }
 
     @Override
