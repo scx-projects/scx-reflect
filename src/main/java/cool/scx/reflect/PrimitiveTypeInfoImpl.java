@@ -1,6 +1,6 @@
 package cool.scx.reflect;
 
-import cool.scx.reflect.ScxReflect.TypeKey;
+import java.util.Objects;
 
 import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
@@ -23,6 +23,21 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
     @Override
     public Class<?> rawClass() {
         return rawClass;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (object instanceof PrimitiveTypeInfoImpl that) {
+            return Objects.equals(rawClass, that.rawClass);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(getClass());
+        result = 31 * result + Objects.hashCode(rawClass);
+        return result;
     }
 
     @Override
