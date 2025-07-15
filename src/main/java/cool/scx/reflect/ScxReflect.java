@@ -54,9 +54,4 @@ public final class ScxReflect {
         return getType(type, EMPTY_BINDINGS);
     }
 
-    /// 单纯使用 Type 是不准确的, 会丢失泛型 这里使用 type 和 bindings 的组合
-    record TypeKey(Type type, TypeBindings bindings) {
-
-    }
-
 }
