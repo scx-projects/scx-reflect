@@ -20,7 +20,7 @@ public abstract class TypeReference<T> {
         }
     }
 
-    final Type getType() {
+    public final Type getType() {
         return this._type;
     }
 
