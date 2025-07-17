@@ -1,10 +1,11 @@
 package cool.scx.reflect;
 
-import java.lang.reflect.Type;
+import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
+import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 import static java.lang.reflect.AccessFlag.*;
 
 /// ClassInfoImpl
@@ -51,7 +52,29 @@ final class ClassInfoImpl implements ClassInfo {
     private ClassInfo enumClass;
     private RecordComponentInfo[] recordComponents;
 
-    ClassInfoImpl(Type type, TypeBindings bindings) {
+    /// 根据 Class 创建
+    ClassInfoImpl(Class<?> type) {
+        TYPE_CACHE.put(type, this);
+
+        this.rawClass = type;
+        this.bindings = EMPTY_BINDINGS;
+
+        this.name = this.rawClass.getName();
+
+        var accessFlags = this.rawClass.accessFlags();
+        this.accessModifier = _findAccessModifier(accessFlags);
+        this.classKind = _findClassKind(this.rawClass, accessFlags);
+        this.isAbstract = accessFlags.contains(ABSTRACT);
+        this.isFinal = accessFlags.contains(FINAL);
+        this.isStatic = accessFlags.contains(STATIC);
+        this.isAnonymousClass = this.rawClass.isAnonymousClass();
+        this.isMemberClass = this.rawClass.isMemberClass();
+
+    }
+
+    // todo 这个构造函数有无限递归的问题
+    /// 根据 ParameterizedType 创建
+    ClassInfoImpl(ParameterizedType type, TypeBindings bindings) {
         TYPE_CACHE.put(TypeKey.createTypeKey(type, bindings), this);
 
         this.rawClass = _findRawClass(type);
