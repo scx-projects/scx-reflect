@@ -19,9 +19,6 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
         if (!arrayClass.isArray()) {
             throw new IllegalArgumentException(arrayClass.getName() + " is not a array");
         }
-        
-        TYPE_CACHE.put(arrayClass, this);
-        
         this.rawClass = arrayClass;
         this.componentType = getTypeFromClass(this.rawClass.componentType());
     }
