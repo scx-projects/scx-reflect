@@ -10,10 +10,7 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
 
     private final Class<?> rawClass;
 
-    /// 根据 Class 创建
     PrimitiveTypeInfoImpl(Class<?> primitiveClass) {
-        TYPE_CACHE.put(primitiveClass, this);
-
         // 我们假设 此处 primitiveClass 已经是 Class.isPrimitive 过滤后的
         this.rawClass = primitiveClass;
     }
