@@ -87,7 +87,43 @@ public final class ScxReflect {
         if (t != null) {
             return t;
         }
-        return new ArrayTypeInfoImpl(genericArrayType);
+        var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType);
+        // 这里尝试复用或提前缓存, 只有组件类型是没有任何泛型的情况下 我们才可能复用
+        var canOptimize = canReuseRawClass(arrayTypeInfo);
+        if (canOptimize) {
+            var oldTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
+            // 没有我们缓存两份, 一份 Class 的, 一份 GenericArrayType 的
+            if (oldTypeInfo == null) {
+                TYPE_CACHE.put(genericArrayType, arrayTypeInfo);
+                TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
+                return arrayTypeInfo;
+            } else {
+                //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的
+                TYPE_CACHE.put(genericArrayType, oldTypeInfo);
+                return oldTypeInfo;
+            }
+        } else {
+            //没有优化的可能 
+            TYPE_CACHE.put(genericArrayType, arrayTypeInfo);
+            return arrayTypeInfo;
+        }
+    }
+
+    private static boolean canReuseRawClass(ArrayTypeInfo arrayTypeInfo) {
+        var componentType = arrayTypeInfo.componentType();
+        // 基本类型必不存在泛型
+        if (componentType instanceof PrimitiveTypeInfo) {
+            return true;
+        }
+        // 普通类是否存在泛型 
+        if (componentType instanceof ClassInfo classInfo) {
+            return classInfo.bindings() == EMPTY_BINDINGS;
+        }
+        // 多维数组需要递归判断
+        if (componentType instanceof ArrayTypeInfo innerArray) {
+            return canReuseRawClass(innerArray);
+        }
+        return false;
     }
 
     private static TypeInfo getTypeFromGenericArrayType(GenericArrayType type, TypeBindings contextBindings) {
@@ -95,6 +131,8 @@ public final class ScxReflect {
         if (contextBindings == EMPTY_BINDINGS) {
             return getTypeFromGenericArrayType(type);
         }
+        //1, 需要构建一个 能够表示 当前 数组是谁的 类
+        TypeKey key = TypeKey.createTypeKey(type, contextBindings);
         //todo 这里就很复杂了 
         return new ArrayTypeInfoImpl(type, contextBindings);
     }
