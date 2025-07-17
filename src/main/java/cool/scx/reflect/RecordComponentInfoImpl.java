@@ -2,6 +2,8 @@ package cool.scx.reflect;
 
 import java.lang.reflect.RecordComponent;
 
+import static cool.scx.reflect.TypeFactory.getTypeFromAny;
+
 final class RecordComponentInfoImpl implements RecordComponentInfo {
 
     private final RecordComponent rawRecordComponent;
@@ -13,7 +15,7 @@ final class RecordComponentInfoImpl implements RecordComponentInfo {
         this.rawRecordComponent = recordComponent;
         this.declaringClass = declaringClass;
         this.name = this.rawRecordComponent.getName();
-        this.recordComponentType = ScxReflect.getType(this.rawRecordComponent.getGenericType(), this.declaringClass.bindings());
+        this.recordComponentType = getTypeFromAny(this.rawRecordComponent.getGenericType(), this.declaringClass.bindings());
     }
 
     @Override

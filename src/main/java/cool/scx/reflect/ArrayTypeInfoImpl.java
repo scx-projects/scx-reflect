@@ -1,10 +1,10 @@
 package cool.scx.reflect;
 
-import java.lang.reflect.Type;
+import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
 
-import static cool.scx.reflect.ReflectSupport._findArrayRawClass;
-import static cool.scx.reflect.ReflectSupport._findComponentType;
-import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
+import static cool.scx.reflect.TypeFactory.getTypeFromAny;
+import static cool.scx.reflect.TypeFactory.getTypeFromClass;
 
 /// ArrayTypeInfoImpl
 ///
@@ -15,12 +15,18 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     private final Class<?> rawClass;
     private final TypeInfo componentType;
 
-    ArrayTypeInfoImpl(Type type, TypeBindings bindings) {
-        TYPE_CACHE.put(TypeKey.createTypeKey(type, bindings), this);
+    ArrayTypeInfoImpl(Class<?> arrayClass) {
+        // 我们假设 此处 type 已经是 Class.isArray 过滤后的
+        this.rawClass = arrayClass;
+        this.componentType = getTypeFromClass(this.rawClass.componentType());
+    }
 
-        // 我们假设 此处 type 已经是 Class.isArray 过滤后的 或 GenericArrayType 
-        this.componentType = _findComponentType(type, bindings);
-        this.rawClass = _findArrayRawClass(type, this.componentType);
+    // GenericArrayType 中的 getGenericComponentType 永远不可能指向自身
+    // 所以我们不涉及到 ClassInfoImpl 中出现 泛型自引用的可能, 这里简单处理
+    ArrayTypeInfoImpl(GenericArrayType type, TypeBindings contextBindings) {
+        this.componentType = getTypeFromAny(type.getGenericComponentType(), contextBindings);
+        // 这里虚拟一个没有泛型的数组类型, 但因为 java 数组是协变的所以问题不大
+        this.rawClass = Array.newInstance(this.componentType.rawClass(), 0).getClass();
     }
 
     @Override
