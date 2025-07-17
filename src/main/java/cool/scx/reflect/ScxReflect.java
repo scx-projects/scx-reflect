@@ -58,7 +58,12 @@ public final class ScxReflect {
             TYPE_CACHE.put(parameterizedType, classInfo);
             return classInfo;
         }
-        // 我们直接使用一个 ClassInfoImpl 来实现现有类型的查找
+        // 我们直接使用一个 ClassInfoImpl 来实现现有类型的查找, 并同时使用这个作为后续存储的 key
+        // 注意 ClassInfoImpl 的创建实际上是轻量的, 而且携带了真正完整的 bindings
+        // 为了实现严格的 "同一个类型永远可以只获得同一个 TypeInfo",
+        // 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的 诸如 FieldInfo, MethodInfo 等.
+        // 而这些对象 实际上是会被 ClassInfoImpl 缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次.
+        // 性能不至于成为问题
         var classInfo = new ClassInfoImpl(parameterizedType, contextBindings);
         var t = TYPE_CACHE.get(classInfo);
         if (t != null) {
@@ -80,7 +85,12 @@ public final class ScxReflect {
             // 这里尝试复用或提前缓存, 只有组件类型是没有任何泛型的情况下 我们才可能复用
             return tryOptimizeCache(arrayTypeInfo, genericArrayType);
         }
-        // 我们直接使用一个 ArrayTypeInfoImpl 来实现现有类型的查找
+        // 我们直接使用一个 ArrayTypeInfoImpl 来实现现有类型的查找, 并同时使用这个作为后续存储的 key
+        // 注意 ArrayTypeInfoImpl 的创建实际上是轻量的, 而且携带了真正完整的 bindings
+        // 为了实现严格的 "同一个类型永远可以只获得同一个 TypeInfo",
+        // 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的 诸如 FieldInfo, MethodInfo 等.
+        // 而这些对象 实际上是会被 ClassInfoImpl 缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次.
+        // 性能不至于成为问题
         var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, contextBindings);
         var typeInfo = TYPE_CACHE.get(arrayTypeInfo);
         if (typeInfo != null) {
