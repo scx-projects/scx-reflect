@@ -3,7 +3,7 @@ package cool.scx.reflect;
 import java.lang.reflect.Field;
 
 import static cool.scx.reflect.ReflectSupport._findAccessModifier;
-import static cool.scx.reflect.ScxReflect.getTypeFromAny;
+import static cool.scx.reflect.TypeFactory.getTypeFromAny;
 import static java.lang.reflect.AccessFlag.FINAL;
 import static java.lang.reflect.AccessFlag.STATIC;
 

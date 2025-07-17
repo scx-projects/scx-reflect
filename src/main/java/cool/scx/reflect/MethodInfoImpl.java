@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import static cool.scx.reflect.ReflectSupport.*;
-import static cool.scx.reflect.ScxReflect.getTypeFromAny;
+import static cool.scx.reflect.TypeFactory.getTypeFromAny;
 import static java.lang.reflect.AccessFlag.*;
 
 /// MethodInfoImpl

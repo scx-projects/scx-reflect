@@ -2,7 +2,7 @@ package cool.scx.reflect;
 
 import java.lang.reflect.RecordComponent;
 
-import static cool.scx.reflect.ScxReflect.getTypeFromAny;
+import static cool.scx.reflect.TypeFactory.getTypeFromAny;
 
 final class RecordComponentInfoImpl implements RecordComponentInfo {
 

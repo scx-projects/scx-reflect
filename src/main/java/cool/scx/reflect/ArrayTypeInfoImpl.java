@@ -3,7 +3,8 @@ package cool.scx.reflect;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 
-import static cool.scx.reflect.ScxReflect.getTypeFromClass;
+import static cool.scx.reflect.TypeFactory.getTypeFromAny;
+import static cool.scx.reflect.TypeFactory.getTypeFromClass;
 
 /// ArrayTypeInfoImpl
 ///
@@ -23,7 +24,7 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     // GenericArrayType 中的 getGenericComponentType 永远不可能指向自身
     // 所以我们不涉及到 ClassInfoImpl 中出现 泛型自引用的可能, 这里简单处理
     ArrayTypeInfoImpl(GenericArrayType type, TypeBindings contextBindings) {
-        this.componentType = ScxReflect.getTypeFromAny(type.getGenericComponentType(), contextBindings);
+        this.componentType = getTypeFromAny(type.getGenericComponentType(), contextBindings);
         // 这里虚拟一个没有泛型的数组类型, 但因为 java 数组是协变的所以问题不大
         this.rawClass = Array.newInstance(this.componentType.rawClass(), 0).getClass();
     }

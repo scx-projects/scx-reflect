@@ -2,7 +2,7 @@ package cool.scx.reflect;
 
 import java.lang.reflect.Parameter;
 
-import static cool.scx.reflect.ScxReflect.getTypeFromAny;
+import static cool.scx.reflect.TypeFactory.getTypeFromAny;
 
 /// ParameterInfoImpl
 ///

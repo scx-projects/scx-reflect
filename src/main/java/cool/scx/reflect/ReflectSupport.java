@@ -5,6 +5,7 @@ import java.util.*;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
+import static cool.scx.reflect.TypeFactory.getTypeFromAny;
 import static java.util.Collections.addAll;
 
 /// 内部构建辅助类
@@ -18,7 +19,7 @@ final class ReflectSupport {
         var typeInfos = new TypeInfo[actualTypeArguments.length];
         for (int i = 0; i < actualTypeArguments.length; i = i + 1) {
             var actualTypeArgument = actualTypeArguments[i];
-            var typeInfo = ScxReflect.getTypeFromAny(actualTypeArgument, contextBindings);
+            var typeInfo = getTypeFromAny(actualTypeArgument, contextBindings);
             typeInfos[i] = typeInfo;
         }
         return new TypeBindingsImpl(typeVariables, typeInfos);
@@ -57,7 +58,7 @@ final class ReflectSupport {
         var superClass = rawClass.getGenericSuperclass();
         // superClass 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
-        return superClass != null ? (ClassInfo) ScxReflect.getTypeFromAny(superClass, contextBindings) : null;
+        return superClass != null ? (ClassInfo) getTypeFromAny(superClass, contextBindings) : null;
     }
 
     public static ClassInfo[] _findInterfaces(Class<?> rawClass, TypeBindings contextBindings) {
@@ -66,7 +67,7 @@ final class ReflectSupport {
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
         var result = new ClassInfo[interfaces.length];
         for (int i = 0; i < interfaces.length; i = i + 1) {
-            result[i] = (ClassInfo) ScxReflect.getTypeFromAny(interfaces[i], contextBindings);
+            result[i] = (ClassInfo) getTypeFromAny(interfaces[i], contextBindings);
         }
         return result;
     }
