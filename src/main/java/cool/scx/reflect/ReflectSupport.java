@@ -10,20 +10,6 @@ import static java.util.Collections.addAll;
 /// 内部构建辅助类
 final class ReflectSupport {
 
-    public static TypeBindings _findBindings(ParameterizedType type) {
-        // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
-        var typeVariables = ((Class<?>) type.getRawType()).getTypeParameters();
-        //这里我们假设 typeParameters 和 actualTypeArguments 的长度和顺序是完全一一对应的
-        var actualTypeArguments = type.getActualTypeArguments();
-        var typeInfos = new TypeInfo[actualTypeArguments.length];
-        for (int i = 0; i < actualTypeArguments.length; i = i + 1) {
-            var actualTypeArgument = actualTypeArguments[i];
-            var typeInfo = ScxReflect.getTypeFromAny(actualTypeArgument);
-            typeInfos[i] = typeInfo;
-        }
-        return new TypeBindingsImpl(typeVariables, typeInfos);
-    }
-
     public static TypeBindings _findBindings(ParameterizedType type, TypeBindings contextBindings) {
         // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
         var typeVariables = ((Class<?>) type.getRawType()).getTypeParameters();
