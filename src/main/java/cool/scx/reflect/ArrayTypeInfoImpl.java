@@ -24,9 +24,6 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     }
 
     ArrayTypeInfoImpl(GenericArrayType genericArrayType) {
-        // 提前缓存半成品 以便在 bindings 中可以递归引用
-        TYPE_CACHE.put(genericArrayType, this);
-
         this.componentType = ScxReflect.getTypeFromAny(genericArrayType.getGenericComponentType());
         // 这里虚拟一个没有泛型的数组类型, 但因为 java 数组是协变的所以问题不大
         this.rawClass = Array.newInstance(this.componentType.rawClass(), 0).getClass();
