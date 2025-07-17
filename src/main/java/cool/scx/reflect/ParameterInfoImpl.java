@@ -2,6 +2,8 @@ package cool.scx.reflect;
 
 import java.lang.reflect.Parameter;
 
+import static cool.scx.reflect.ScxReflect.getTypeFromAny;
+
 /// ParameterInfoImpl
 ///
 /// @author scx567888
@@ -17,7 +19,7 @@ final class ParameterInfoImpl implements ParameterInfo {
         this.rawParameter = parameter;
         this.declaringExecutable = declaringExecutable;
         this.name = this.rawParameter.getName();
-        this.parameterType = ScxReflect.getType(this.rawParameter.getParameterizedType(), this.declaringExecutable.declaringClass().bindings());
+        this.parameterType = getTypeFromAny(this.rawParameter.getParameterizedType(), this.declaringExecutable.declaringClass().bindings());
     }
 
     @Override
