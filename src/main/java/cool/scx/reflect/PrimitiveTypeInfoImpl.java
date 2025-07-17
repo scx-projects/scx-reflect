@@ -1,5 +1,7 @@
 package cool.scx.reflect;
 
+import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
+
 /// PrimitiveTypeInfoImpl
 ///
 /// @author scx567888
@@ -12,6 +14,9 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
         if (!primitiveClass.isPrimitive()) {
             throw new IllegalArgumentException(primitiveClass.getName() + " is not a primitive");
         }
+        
+        TYPE_CACHE.put(primitiveClass, this);
+        
         this.rawClass = primitiveClass;
     }
 
