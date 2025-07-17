@@ -26,8 +26,9 @@ public final class ScxReflect {
 
     // Class 永远不存在 bindings
     static TypeInfo getTypeFromClass(Class<?> clazz) {
-        // 直接使用原始 Class 作为 Key, 后续可以直接通过 Class 进行查找.
-        // 减少重复构建 key 的成本
+        // 使用原始 Class 作为 key, 后续可以直接通过 Class 进行查找,
+        // 这种类型不会携带任何泛型上下文, 天然是可重用的.
+        // 因此可以安全地作为缓存 key, 且便于后续快速查找, 避免重复构造.
         var t = TYPE_CACHE.get(clazz);
         if (t != null) {
             return t;
