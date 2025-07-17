@@ -41,7 +41,7 @@ final class MethodInfoImpl implements MethodInfo {
         this.isNative = accessFlags.contains(NATIVE);
         this.isDefault = this.rawMethod.isDefault();
         this.parameters = _findParameters(this.rawMethod, this);
-        this.returnType = getTypeFromAny(this.rawMethod.getGenericReturnType(), this.declaringClass.bindings());
+        this.returnType = getTypeFromAny(this.rawMethod.getGenericReturnType(), new TypeResolutionContext(this.declaringClass.bindings()));
     }
 
     @Override
