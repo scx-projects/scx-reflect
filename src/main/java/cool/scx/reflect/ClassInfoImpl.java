@@ -4,7 +4,6 @@ import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 
 import static cool.scx.reflect.ReflectSupport.*;
-import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 import static java.lang.reflect.AccessFlag.*;
 
@@ -53,6 +52,7 @@ final class ClassInfoImpl implements ClassInfo {
     private RecordComponentInfo[] recordComponents;
 
     ClassInfoImpl(Class<?> type) {
+        // 我们假设 此处 type 已经是 !Class.isArray 并且 !Class.isPrimitive 过滤后的
         this.rawClass = type;
         this.bindings = EMPTY_BINDINGS;
 
