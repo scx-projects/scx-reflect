@@ -69,23 +69,13 @@ final class ClassInfoImpl implements ClassInfo {
 
     }
 
-    // 理论上 是可能存在 一个 ParameterizedType 的泛型参数 是自身的情况
-    // 比如一个类定义如下:
-    // public class Node<T extends Node<T>> {
-    //
-    // }
-    // 
-    // Type type = Node.class.getTypeParameters()[0].getBounds()[0];
-    //
-    // 这时 type 的 泛型参数实际上就是 自引用的
-    // 虽然我们可以 通过 在 ClassInfoImpl 构造函数中 提前缓存半成品 的方式来部分绕过, 但是此处我们并不这么做
-    // 因为我们在 ScxReflect 中只对外提供了 一个通过 Class 和 一个通过 TypeReference 进行创建 TypeInfo 的方式
-    // 用户 仅通过这两个 方法是没办法构建出 一个 存在自引用的 类型的
-    // 所以实际上不会触发 递归解析 bindings, 这里就简单处理了
-    ClassInfoImpl(ParameterizedType parameterizedType, TypeBindings contextBindings) {
+    ClassInfoImpl(ParameterizedType parameterizedType, TypeResolutionContext context) {
+        //添加半成品对象, 用于支持 _findBindings 中的递归泛型解析
+        context.inProgressTypes().put(parameterizedType, this);
+
         // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class, 此处强转安全
         this.rawClass = (Class<?>) parameterizedType.getRawType();
-        this.bindings = _findBindings(parameterizedType, contextBindings);
+        this.bindings = _findBindings(parameterizedType, context);
 
         this.name = this.rawClass.getName();
 
