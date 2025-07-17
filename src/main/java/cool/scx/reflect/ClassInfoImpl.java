@@ -51,9 +51,9 @@ final class ClassInfoImpl implements ClassInfo {
     private ClassInfo enumClass;
     private RecordComponentInfo[] recordComponents;
 
-    ClassInfoImpl(Class<?> type) {
+    ClassInfoImpl(Class<?> clazz) {
         // 我们假设 此处 type 已经是 !Class.isArray 并且 !Class.isPrimitive 过滤后的
-        this.rawClass = type;
+        this.rawClass = clazz;
         this.bindings = EMPTY_BINDINGS;
 
         this.name = this.rawClass.getName();
@@ -82,10 +82,10 @@ final class ClassInfoImpl implements ClassInfo {
     // 因为我们在 ScxReflect 中只对外提供了 一个通过 Class 和 一个通过 TypeReference 进行创建 TypeInfo 的方式
     // 用户 仅通过这两个 方法是没办法构建出 一个 存在自引用的 类型的
     // 所以实际上不会触发 递归解析 bindings, 这里就简单处理了
-    ClassInfoImpl(ParameterizedType type, TypeBindings contextBindings) {
+    ClassInfoImpl(ParameterizedType parameterizedType, TypeBindings contextBindings) {
         // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class, 此处强转安全
-        this.rawClass = (Class<?>) type.getRawType();
-        this.bindings = _findBindings(type, contextBindings);
+        this.rawClass = (Class<?>) parameterizedType.getRawType();
+        this.bindings = _findBindings(parameterizedType, contextBindings);
 
         this.name = this.rawClass.getName();
 
