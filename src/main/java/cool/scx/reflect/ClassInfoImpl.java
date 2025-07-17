@@ -1,6 +1,7 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 
 import static cool.scx.reflect.ReflectSupport.*;
@@ -268,14 +269,27 @@ final class ClassInfoImpl implements ClassInfo {
 
     @Override
     public String toString() {
-        //todo 匿名内部类会变成空字符串
-        var shortName = rawClass.getSimpleName();
-        var typeArgs = Arrays.stream(bindings.typeInfos()).map(TypeInfo::toString).toList();
-        if (typeArgs.isEmpty()) {
-            return shortName;
-        } else {
-            return shortName + "<" + String.join(", ", typeArgs) + ">";
+        // 匿名类返回全名
+        if (isAnonymousClass) {
+            return name;
         }
+        // 没有 bindings 返回短名
+        var shortName = rawClass.getSimpleName();
+        if (bindings.isEmpty()) {
+            return shortName;
+        }
+        // 这里可能存在自引用问题
+        var typeArgs = Arrays.stream(bindings.typeInfos()).map(typeInfo -> {
+            if (typeInfo instanceof ClassInfo c) {
+                //todo 这里会递归
+                return typeInfo.toString();   
+            }
+            else {
+                return typeInfo.toString();
+            }
+        }).toList();
+        // 模拟泛型参数   
+        return shortName + "<" + String.join(", ", typeArgs) + ">";
     }
 
 }
