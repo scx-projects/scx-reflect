@@ -7,19 +7,19 @@ import java.util.Map;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 
 /// 非线程安全
-final class TypeFactory {
+public final class TypeFactory {
 
     // Key 可能是 Class, ParameterizedType, GenericArrayType, ArrayTypeInfo, ClassInfo
-    private static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
+    public static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
 
     // 仅做分发
-    static TypeInfo getTypeFromAny(Type type, TypeBindings contextBindings) {
+    static TypeInfo getTypeFromAny(Type type, TypeResolutionContext context) {
         return switch (type) {
             case Class<?> c -> getTypeFromClass(c);
-            case ParameterizedType p -> getTypeFromParameterizedType(p, contextBindings);
-            case GenericArrayType g -> getTypeFromGenericArrayType(g, contextBindings);
-            case TypeVariable<?> t -> getTypeFromTypeVariable(t, contextBindings);
-            case WildcardType w -> getTypeFromWildcardType(w, contextBindings);
+            case ParameterizedType p -> getTypeFromParameterizedType(p, context);
+            case GenericArrayType g -> getTypeFromGenericArrayType(g, context);
+            case TypeVariable<?> t -> getTypeFromTypeVariable(t, context);
+            case WildcardType w -> getTypeFromWildcardType(w, context);
             default -> throw new IllegalArgumentException("Unsupported type: " + type);
         };
     }
@@ -48,18 +48,18 @@ final class TypeFactory {
         return classInfo;
     }
 
-    private static TypeInfo getTypeFromParameterizedType(ParameterizedType parameterizedType, TypeBindings contextBindings) {
+    private static TypeInfo getTypeFromParameterizedType(ParameterizedType parameterizedType, TypeResolutionContext context) {
         // 如果上下文 bindings 为空, 则可直接使用原始 ParameterizedType 作为 key.
         // 这是安全的, 因为即使其中包含 TypeVariable 或 WildcardType, 也会因 bindings 为空而退化为其上界, 结果是确定的.
         // 因此, 在无上下文 bindings 的场景下, 同一个 ParameterizedType 实例总是可以映射到同一个 TypeInfo.
         // 此处直接使用 ParameterizedType 作为缓存 key 是安全有效的 并且简化了缓存结构.
-        if (contextBindings == EMPTY_BINDINGS) {
+        if (context.bindings() == EMPTY_BINDINGS) {
             // 使用原始 ParameterizedType 作为 Key
             var t = TYPE_CACHE.get(parameterizedType);
             if (t != null) {
                 return t;
             }
-            var classInfo = new ClassInfoImpl(parameterizedType, EMPTY_BINDINGS);
+            var classInfo = new ClassInfoImpl(parameterizedType, context);
             TYPE_CACHE.put(parameterizedType, classInfo);
             return classInfo;
         }
@@ -69,7 +69,7 @@ final class TypeFactory {
         // 虽然构建 ClassInfoImpl 看似重复, 但它创建是轻量的, 并且后续可以作为 cache key 和最终值双重使用, 避免多次构建.
         // 而且 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的对象, 诸如 FieldInfo, MethodInfo 等.
         // 而这些对象 实际上是会被 ClassInfoImpl 内部缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次, 性能不至于成为问题.
-        var classInfo = new ClassInfoImpl(parameterizedType, contextBindings);
+        var classInfo = new ClassInfoImpl(parameterizedType, context);
         var t = TYPE_CACHE.get(classInfo);
         if (t != null) {
             return t;
@@ -80,18 +80,18 @@ final class TypeFactory {
         return classInfo;
     }
 
-    private static TypeInfo getTypeFromGenericArrayType(GenericArrayType genericArrayType, TypeBindings contextBindings) {
+    private static TypeInfo getTypeFromGenericArrayType(GenericArrayType genericArrayType, TypeResolutionContext context) {
         // 当上下文 bindings 为空时, GenericArrayType 是可以安全地作为 key 的.
         // 因为没有上下文替换, 其组件类型是确定的, 我们可以直接使用其作为缓存 key.
         // 同时可以尝试优化缓存: 
         // 若组件类型不包含泛型 (即是基本类型或非泛型类), 我们还可以将其 rawClass 作为额外的 key, 进行双重缓存.
-        if (contextBindings == EMPTY_BINDINGS) {
+        if (context.bindings() == EMPTY_BINDINGS) {
             // 使用原始 GenericArrayType 作为 Key, 这里是安全的, 因为我们没有上下文 bindings 也就不会发生替换
             var t = TYPE_CACHE.get(genericArrayType);
             if (t != null) {
                 return t;
             }
-            var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, EMPTY_BINDINGS);
+            var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, context);
             // 这里尝试复用或提前缓存, 只有组件类型是没有任何泛型的情况下 我们才可能复用
             return tryOptimizeCache(arrayTypeInfo, genericArrayType);
         }
@@ -101,7 +101,7 @@ final class TypeFactory {
         // 虽然构建 ArrayTypeInfoImpl 看似重复, 但它创建是轻量的, 并且后续可以作为 cache key 和最终值双重使用, 避免多次构建.
         // 而且 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的对象, 诸如 FieldInfo, MethodInfo 等.
         // 而这些对象 实际上是会被 ClassInfoImpl 内部缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次, 性能不至于成为问题.
-        var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, contextBindings);
+        var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, context);
         var typeInfo = TYPE_CACHE.get(arrayTypeInfo);
         if (typeInfo != null) {
             return typeInfo;
@@ -155,20 +155,32 @@ final class TypeFactory {
         }
     }
 
-    private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable, TypeBindings contextBindings) {
+    private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable, TypeResolutionContext context) {
         // 尝试从上下文 bindings 获取已绑定的类型变量类型, 若无法获取，则使用其上界 (第一个 bound) 进行退化处理.
         // 这种退化是合理且安全的, 因为在 Java 泛型系统中也是这么退化的.
-        var typeInfo = contextBindings.get(typeVariable);
+        var typeInfo = context.bindings().get(typeVariable);
         if (typeInfo != null) {
             return typeInfo;
         }
-        return getTypeFromAny(typeVariable.getBounds()[0], contextBindings);
+        var bound = typeVariable.getBounds()[0];
+        // 处理可能发生的递归泛型引用
+        var classInfo = context.inProgressTypes().get(bound);
+        if (classInfo != null) {
+            return classInfo;
+        }
+        return getTypeFromAny(bound, context);
     }
 
-    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeBindings contextBindings) {
+    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeResolutionContext context) {
         // 通配符类型理论上 还具有下界, 但是我们在反射系统中通常只想知道 "这个类型到底能存储什么".
         // 所以此处忽略下界, 直接退化为上界.
-        return getTypeFromAny(wildcardType.getUpperBounds()[0], contextBindings);
+        var bound = wildcardType.getUpperBounds()[0];
+        // 处理可能发生的递归泛型引用
+        var classInfo = context.inProgressTypes().get(bound);
+        if (classInfo != null) {
+            return classInfo;
+        }
+        return getTypeFromAny(bound, context);
     }
 
 }

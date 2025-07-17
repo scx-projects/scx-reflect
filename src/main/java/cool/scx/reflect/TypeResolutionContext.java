@@ -1,6 +1,7 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
@@ -19,8 +20,8 @@ import java.util.Map;
 final class TypeResolutionContext {
 
     private final TypeBindings bindings;
-    //正在解析的半成品 ClassInfo, 用于解决递归问题
-    private Map<ParameterizedType, ClassInfo> inProgressTypes;
+    // 正在解析的半成品 ClassInfo, 用于解决递归问题
+    private Map<Type, ClassInfo> inProgressTypes;
 
     public TypeResolutionContext(TypeBindings bindings) {
         this.bindings = bindings;
@@ -30,7 +31,7 @@ final class TypeResolutionContext {
         return bindings;
     }
 
-    public Map<ParameterizedType, ClassInfo> inProgressTypes() {
+    public Map<Type, ClassInfo> inProgressTypes() {
         if (inProgressTypes == null) {
             inProgressTypes = new IdentityHashMap<>();
         }
