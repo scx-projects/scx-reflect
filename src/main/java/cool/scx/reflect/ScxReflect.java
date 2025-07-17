@@ -26,7 +26,8 @@ public final class ScxReflect {
 
     // Class 永远不存在 bindings
     static TypeInfo getTypeFromClass(Class<?> clazz) {
-        // 使用原始 Class 作为 Key
+        // 直接使用原始 Class 作为 Key, 后续可以直接通过 Class 进行查找.
+        // 减少重复构建 key 的成本
         var t = TYPE_CACHE.get(clazz);
         if (t != null) {
             return t;
@@ -47,7 +48,10 @@ public final class ScxReflect {
     }
 
     private static TypeInfo getTypeFromParameterizedType(ParameterizedType parameterizedType, TypeBindings contextBindings) {
-        //如果上下文 bindings 为 空, 消解为 无上下文 bindings 的版本
+        // 如果上下文 bindings 为 空, 直接使用原始 ParameterizedType 作为 Key, 后续可以直接通过 ParameterizedType 进行查找.
+        // 在 bindings 为空的情况下 一般我们认为 ParameterizedType 就已经携带了足够的 泛型信息 (即使是或者 TypeVariable, WildcardType)
+        // 也会因为没有 上下文 bindings 而退化为上界, 也就是说 我们可以认为 所有 没有上下文 bindings 的 ParameterizedType 
+        // 最终的类型 永远是唯一的, 所以 ParameterizedType 作为 Key 是安全的
         if (contextBindings == EMPTY_BINDINGS) {
             // 使用原始 ParameterizedType 作为 Key
             var t = TYPE_CACHE.get(parameterizedType);
@@ -58,6 +62,7 @@ public final class ScxReflect {
             TYPE_CACHE.put(parameterizedType, classInfo);
             return classInfo;
         }
+        // 这里有 上下文 bindings , 不能使用简单的 ParameterizedType 来表示 , 因为 替换后的 真实类型 并不确定
         // 我们直接使用一个 ClassInfoImpl 来实现现有类型的查找, 并同时使用这个作为后续存储的 key
         // 注意 ClassInfoImpl 的创建实际上是轻量的, 而且携带了真正完整的 bindings
         // 为了实现严格的 "同一个类型永远可以只获得同一个 TypeInfo",
@@ -70,6 +75,8 @@ public final class ScxReflect {
             return t;
         }
         TYPE_CACHE.put(classInfo, classInfo);
+        // 这里我们无需像 构建 ArrayTypeInfoImpl 那样尝试优化缓存
+        // 因为 任意一个类 只有没有泛型 就永远不可能是 ParameterizedType, 根本不会走到这段代码
         return classInfo;
     }
 
