@@ -52,10 +52,7 @@ final class ClassInfoImpl implements ClassInfo {
     private ClassInfo enumClass;
     private RecordComponentInfo[] recordComponents;
 
-    /// 根据 Class 创建
     ClassInfoImpl(Class<?> type) {
-        TYPE_CACHE.put(type, this);
-
         this.rawClass = type;
         this.bindings = EMPTY_BINDINGS;
 
