@@ -1,7 +1,12 @@
 package cool.scx.reflect;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.AccessFlag;
+import java.lang.reflect.Executable;
+import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;

@@ -170,5 +170,5 @@ final class TypeFactory {
         // 所以此处忽略下界, 直接退化为上界.
         return getTypeFromAny(wildcardType.getUpperBounds()[0], contextBindings);
     }
-    
+
 }
