@@ -14,9 +14,6 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
         if (!primitiveClass.isPrimitive()) {
             throw new IllegalArgumentException(primitiveClass.getName() + " is not a primitive");
         }
-        
-        TYPE_CACHE.put(primitiveClass, this);
-        
         this.rawClass = primitiveClass;
     }
 
