@@ -1,8 +1,9 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.TypeVariable;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
@@ -269,27 +270,45 @@ final class ClassInfoImpl implements ClassInfo {
 
     @Override
     public String toString() {
-        // 匿名类返回全名
+        return toString(new HashSet<>());
+    }
+
+    private String toString(Set<TypeInfo> visited) {
+        //内部类使用全名
         if (isAnonymousClass) {
             return name;
         }
-        // 没有 bindings 返回短名
+        //没有 bindings 使用短名
         var shortName = rawClass.getSimpleName();
         if (bindings.isEmpty()) {
             return shortName;
         }
-        // 这里可能存在自引用问题
-        var typeArgs = Arrays.stream(bindings.typeInfos()).map(typeInfo -> {
-            if (typeInfo instanceof ClassInfo c) {
-                //todo 这里会递归
-                return typeInfo.toString();   
+
+        // 避免递归
+        if (!visited.add(this)) {
+            return null;
+        }
+        try {
+            var typeArgs = new ArrayList<String>();
+            var typeInfos = bindings.typeInfos();
+            for (int i = 0; i < typeInfos.length; i = i + 1) {
+                var typeInfo = typeInfos[i];
+                if (typeInfo instanceof ClassInfoImpl c) {
+                    var str = c.toString(visited); // 递归调用 with visited
+                    // 表示递归引用了 这里使用 泛型参数名称替换
+                    if (str == null) {
+                        typeArgs.add(bindings.typeVariables()[i].getName());
+                    } else {
+                        typeArgs.add(str);
+                    }
+                } else {
+                    typeArgs.add(typeInfo.toString());
+                }
             }
-            else {
-                return typeInfo.toString();
-            }
-        }).toList();
-        // 模拟泛型参数   
-        return shortName + "<" + String.join(", ", typeArgs) + ">";
+            return shortName + "<" + String.join(", ", typeArgs) + ">";
+        } finally {
+            visited.remove(this);
+        }
     }
 
 }
