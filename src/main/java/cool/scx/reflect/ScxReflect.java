@@ -25,13 +25,13 @@ public final class ScxReflect {
     }
 
     /// 仅做分发
-    static TypeInfo getTypeFromAny(Type type, TypeBindings bindings) {
+    static TypeInfo getTypeFromAny(Type type, TypeBindings contextBindings) {
         return switch (type) {
             case Class<?> c -> getTypeFromClass(c);
-            case ParameterizedType p -> getTypeFromParameterizedType(p, bindings);
-            case GenericArrayType g -> getTypeFromGenericArrayType(g, bindings);
-            case TypeVariable<?> t -> getTypeFromTypeVariable(t, bindings);
-            case WildcardType w -> getTypeFromWildcardType(w, bindings);
+            case ParameterizedType p -> getTypeFromParameterizedType(p, contextBindings);
+            case GenericArrayType g -> getTypeFromGenericArrayType(g, contextBindings);
+            case TypeVariable<?> t -> getTypeFromTypeVariable(t, contextBindings);
+            case WildcardType w -> getTypeFromWildcardType(w, contextBindings);
             default -> throw new IllegalArgumentException("Unsupported type: " + type);
         };
     }
@@ -82,31 +82,29 @@ public final class ScxReflect {
     }
 
     private static TypeInfo getTypeFromGenericArrayType(GenericArrayType genericArrayType) {
-        // 使用原始 GenericArrayType 作为 Key
+        // 使用原始 GenericArrayType 作为 Key, 这里是安全的, 因为我们没有上下文 bindings 也就不会发生替换
         var t = TYPE_CACHE.get(genericArrayType);
         if (t != null) {
             return t;
         }
         var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType);
         // 这里尝试复用或提前缓存, 只有组件类型是没有任何泛型的情况下 我们才可能复用
-        var canOptimize = canReuseRawClass(arrayTypeInfo);
-        if (canOptimize) {
-            var oldTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
-            // 没有我们缓存两份, 一份 Class 的, 一份 GenericArrayType 的
-            if (oldTypeInfo == null) {
-                TYPE_CACHE.put(genericArrayType, arrayTypeInfo);
-                TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
-                return arrayTypeInfo;
-            } else {
-                //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的
-                TYPE_CACHE.put(genericArrayType, oldTypeInfo);
-                return oldTypeInfo;
-            }
-        } else {
-            //没有优化的可能 
-            TYPE_CACHE.put(genericArrayType, arrayTypeInfo);
-            return arrayTypeInfo;
+        return tryOptimizeCache(arrayTypeInfo, genericArrayType);
+    }
+
+    private static TypeInfo getTypeFromGenericArrayType(GenericArrayType type, TypeBindings contextBindings) {
+        //如果上下文 bindings 为 空, 消解为 无上下文 bindings 的版本
+        if (contextBindings == EMPTY_BINDINGS) {
+            return getTypeFromGenericArrayType(type);
         }
+        // 我们直接使用一个 ArrayTypeInfoImpl 来实现现有类型的查找
+        var arrayTypeInfo = new ArrayTypeInfoImpl(type, contextBindings);
+        var typeInfo = TYPE_CACHE.get(arrayTypeInfo);
+        if (typeInfo != null) {
+            return typeInfo;
+        }
+        // 这里尝试复用或提前缓存, 只有组件类型是没有任何泛型的情况下 我们才可能复用
+        return tryOptimizeCache(arrayTypeInfo, arrayTypeInfo);
     }
 
     private static boolean canReuseRawClass(ArrayTypeInfo arrayTypeInfo) {
@@ -126,15 +124,25 @@ public final class ScxReflect {
         return false;
     }
 
-    private static TypeInfo getTypeFromGenericArrayType(GenericArrayType type, TypeBindings contextBindings) {
-        //如果上下文 bindings 为 空, 消解为 无上下文 bindings 的版本
-        if (contextBindings == EMPTY_BINDINGS) {
-            return getTypeFromGenericArrayType(type);
+    private static TypeInfo tryOptimizeCache(ArrayTypeInfoImpl arrayTypeInfo, Object typeKey) {
+        var canOptimize = canReuseRawClass(arrayTypeInfo);
+        if (canOptimize) {
+            var oldTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
+            // 没有我们缓存两份, 一份 Class 的, 一份 GenericArrayType 的
+            if (oldTypeInfo == null) {
+                TYPE_CACHE.put(typeKey, arrayTypeInfo);
+                TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
+                return arrayTypeInfo;
+            } else {
+                //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的
+                TYPE_CACHE.put(typeKey, oldTypeInfo);
+                return oldTypeInfo;
+            }
+        } else {
+            //没有优化的可能 
+            TYPE_CACHE.put(typeKey, arrayTypeInfo);
+            return arrayTypeInfo;
         }
-        //1, 需要构建一个 能够表示 当前 数组是谁的 类
-        TypeKey key = TypeKey.createTypeKey(type, contextBindings);
-        //todo 这里就很复杂了 
-        return new ArrayTypeInfoImpl(type, contextBindings);
     }
 
     private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable) {

@@ -3,7 +3,6 @@ package cool.scx.reflect;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 
-import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
 import static cool.scx.reflect.ScxReflect.getTypeFromClass;
 
 /// ArrayTypeInfoImpl
@@ -29,13 +28,8 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
         this.rawClass = Array.newInstance(this.componentType.rawClass(), 0).getClass();
     }
 
-    //todo 这个构造函数可能有问题
-
-    /// 根据 GenericArrayType 创建
-    ArrayTypeInfoImpl(GenericArrayType type, TypeBindings bindings) {
-        TYPE_CACHE.put(TypeKey.createTypeKey(type, bindings), this);
-
-        this.componentType = ScxReflect.getTypeFromAny(type.getGenericComponentType(), bindings);
+    ArrayTypeInfoImpl(GenericArrayType type, TypeBindings contextBindings) {
+        this.componentType = ScxReflect.getTypeFromAny(type.getGenericComponentType(), contextBindings);
         // 这里虚拟一个没有泛型的数组类型, 但因为 java 数组是协变的所以问题不大
         this.rawClass = Array.newInstance(this.componentType.rawClass(), 0).getClass();
     }
