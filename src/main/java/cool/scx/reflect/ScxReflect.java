@@ -4,6 +4,8 @@ import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
+
 /// 非线程安全
 public final class ScxReflect {
 
@@ -73,6 +75,20 @@ public final class ScxReflect {
         return new ClassInfoImpl(parameterizedType);
     }
 
+    private static TypeInfo getTypeFromParameterizedType(ParameterizedType type, TypeBindings contextBindings) {
+        //如果上下文 bindings 为 空, 消解为 无上下文 bindings 的版本
+        if (contextBindings == EMPTY_BINDINGS) {
+            return getTypeFromParameterizedType(type);
+        }
+        //todo 这里就很复杂了 
+        var typeKey = TypeKey.createTypeKey(type, contextBindings);
+        var t = TYPE_CACHE.get(typeKey);
+        if (t != null) {
+            return t;
+        }
+        return new ClassInfoImpl(type, contextBindings);
+    }
+
     private static TypeInfo getTypeFromGenericArrayType(GenericArrayType genericArrayType) {
         // 使用原始 GenericArrayType 作为 Key
         var t = TYPE_CACHE.get(genericArrayType);
@@ -92,22 +108,9 @@ public final class ScxReflect {
         return getTypeFromAny(wildcardType.getUpperBounds()[0]);
     }
 
-    ///
-    private static TypeInfo getTypeFromParameterizedType(ParameterizedType type, TypeBindings bindings) {
-        //如果上下文 bindings 为 空, 表示我们不需要从任何地方进行 binding 替换 我们可以直接使用 ParameterizedType 作为 key
-        if (bindings.isEmpty()) {
-            var t = TYPE_CACHE.get(type);
-            if (t != null) {
-                return t;
-            }
-            return new ClassInfoImpl(type);
-        }
-        var typeKey = TypeKey.createTypeKey(type, bindings);
-        var t = TYPE_CACHE.get(typeKey);
-        if (t != null) {
-            return t;
-        }
-        return new ClassInfoImpl(type, bindings);
+    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeBindings bindings) {
+        // 回退到上界
+        return getTypeFromAny(wildcardType.getUpperBounds()[0], bindings);
     }
 
     ///
@@ -115,7 +118,6 @@ public final class ScxReflect {
         return new ArrayTypeInfoImpl(type, bindings);
     }
 
-    
 
     private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable, TypeBindings bindings) {
         //尝试从从绑定中获取 否则回退到 上界
@@ -126,13 +128,9 @@ public final class ScxReflect {
         return getTypeFromAny(typeVariable.getBounds()[0], bindings);
     }
 
-  
 
-    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeBindings bindings) {
-        return getTypeFromAny(wildcardType.getUpperBounds()[0], bindings);
-    }
+ 
 
-   
 
     //********************* 只向外暴漏两个常用方法 ******************
 
