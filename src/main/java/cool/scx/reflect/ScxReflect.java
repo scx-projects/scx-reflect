@@ -64,7 +64,9 @@ public final class ScxReflect {
         if (t != null) {
             return t;
         }
-        return new ClassInfoImpl(parameterizedType);
+        var classInfo = new ClassInfoImpl(parameterizedType);
+        TYPE_CACHE.put(parameterizedType, classInfo);
+        return classInfo;
     }
 
     private static TypeInfo getTypeFromParameterizedType(ParameterizedType type, TypeBindings contextBindings) {
@@ -72,13 +74,14 @@ public final class ScxReflect {
         if (contextBindings == EMPTY_BINDINGS) {
             return getTypeFromParameterizedType(type);
         }
-        //todo 这里就很复杂了 
-        var typeKey = TypeKey.createTypeKey(type, contextBindings);
-        var t = TYPE_CACHE.get(typeKey);
+        // 我们直接使用一个 ClassInfoImpl 来实现现有类型的查找
+        var classInfo = new ClassInfoImpl(type, contextBindings);
+        var t = TYPE_CACHE.get(classInfo);
         if (t != null) {
             return t;
         }
-        return new ClassInfoImpl(type, contextBindings);
+        TYPE_CACHE.put(classInfo, classInfo);
+        return classInfo;
     }
 
     private static TypeInfo getTypeFromGenericArrayType(GenericArrayType genericArrayType) {
@@ -180,11 +183,6 @@ public final class ScxReflect {
     /// 根据 TypeReference 获取 TypeInfo
     public static TypeInfo getType(TypeReference<?> typeReference) {
         return getTypeFromAny(typeReference.getType());
-    }
-
-    //todo 待移除
-    public static TypeInfo getType(Type type) {
-        return getTypeFromAny(type);
     }
 
 }
