@@ -2,6 +2,7 @@ package cool.scx.reflect;
 
 import java.lang.reflect.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
@@ -98,9 +99,27 @@ public final class ScxReflect {
         return new ArrayTypeInfoImpl(genericArrayType);
     }
 
+    private static TypeInfo getTypeFromGenericArrayType(GenericArrayType type, TypeBindings contextBindings) {
+        //如果上下文 bindings 为 空, 消解为 无上下文 bindings 的版本
+        if (contextBindings == EMPTY_BINDINGS) {
+            return getTypeFromGenericArrayType(type);
+        }
+        //todo 这里就很复杂了 
+        return new ArrayTypeInfoImpl(type, contextBindings);
+    }
+
     private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable) {
         // 因为 没有 bindings 只能回退到上界
         return getTypeFromAny(typeVariable.getBounds()[0]);
+    }
+
+    private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable, TypeBindings contextBindings) {
+        //尝试从从绑定中获取 否则回退到 上界
+        var typeInfo = contextBindings.get(typeVariable);
+        if (typeInfo != null) {
+            return typeInfo;
+        }
+        return getTypeFromAny(typeVariable.getBounds()[0], contextBindings);
     }
 
     private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType) {
@@ -108,28 +127,10 @@ public final class ScxReflect {
         return getTypeFromAny(wildcardType.getUpperBounds()[0]);
     }
 
-    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeBindings bindings) {
+    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeBindings contextBindings) {
         // 回退到上界
-        return getTypeFromAny(wildcardType.getUpperBounds()[0], bindings);
+        return getTypeFromAny(wildcardType.getUpperBounds()[0], contextBindings);
     }
-
-    ///
-    private static TypeInfo getTypeFromGenericArrayType(GenericArrayType type, TypeBindings bindings) {
-        return new ArrayTypeInfoImpl(type, bindings);
-    }
-
-
-    private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable, TypeBindings bindings) {
-        //尝试从从绑定中获取 否则回退到 上界
-        var typeInfo = bindings.get(typeVariable);
-        if (typeInfo != null) {
-            return typeInfo;
-        }
-        return getTypeFromAny(typeVariable.getBounds()[0], bindings);
-    }
-
-
- 
 
 
     //********************* 只向外暴漏两个常用方法 ******************
