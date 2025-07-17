@@ -25,18 +25,6 @@ public final class ScxReflect {
     static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
 
     /// 仅做分发
-    static TypeInfo getTypeFromAny(Type type, TypeBindings bindings) {
-        return switch (type) {
-            case Class<?> c -> getTypeFromClass(c);
-            case ParameterizedType p -> getTypeFromParameterizedType(p, bindings);
-            case GenericArrayType g -> getTypeFromGenericArrayType(g, bindings);
-            case TypeVariable<?> t -> getTypeFromTypeVariable(t, bindings);
-            case WildcardType w -> getTypeFromWildcardType(w, bindings);
-            default -> throw new IllegalArgumentException("Unsupported type: " + type);
-        };
-    }
-
-    /// 仅做分发
     static TypeInfo getTypeFromAny(Type type) {
         return switch (type) {
             case Class<?> c -> getTypeFromClass(c);
@@ -48,19 +36,60 @@ public final class ScxReflect {
         };
     }
 
+    /// 仅做分发
+    static TypeInfo getTypeFromAny(Type type, TypeBindings bindings) {
+        return switch (type) {
+            case Class<?> c -> getTypeFromClass(c);
+            case ParameterizedType p -> getTypeFromParameterizedType(p, bindings);
+            case GenericArrayType g -> getTypeFromGenericArrayType(g, bindings);
+            case TypeVariable<?> t -> getTypeFromTypeVariable(t, bindings);
+            case WildcardType w -> getTypeFromWildcardType(w, bindings);
+            default -> throw new IllegalArgumentException("Unsupported type: " + type);
+        };
+    }
+
     /// Class 永远不存在 bindings
-    static TypeInfo getTypeFromClass(Class<?> type) {
-        var t = TYPE_CACHE.get(type);
+    static TypeInfo getTypeFromClass(Class<?> clazz) {
+        // 使用原始 Class 作为 Key
+        var t = TYPE_CACHE.get(clazz);
         if (t != null) {
             return t;
         }
-        if (type.isArray()) {
-            return new ArrayTypeInfoImpl(type);
+        if (clazz.isArray()) {
+            return new ArrayTypeInfoImpl(clazz);
         }
-        if (type.isPrimitive()) {
-            return new PrimitiveTypeInfoImpl(type);
+        if (clazz.isPrimitive()) {
+            return new PrimitiveTypeInfoImpl(clazz);
         }
-        return new ClassInfoImpl(type);
+        return new ClassInfoImpl(clazz);
+    }
+
+    private static TypeInfo getTypeFromParameterizedType(ParameterizedType parameterizedType) {
+        // 使用原始 ParameterizedType 作为 Key
+        var t = TYPE_CACHE.get(parameterizedType);
+        if (t != null) {
+            return t;
+        }
+        return new ClassInfoImpl(parameterizedType);
+    }
+
+    private static TypeInfo getTypeFromGenericArrayType(GenericArrayType genericArrayType) {
+        // 使用原始 GenericArrayType 作为 Key
+        var t = TYPE_CACHE.get(genericArrayType);
+        if (t != null) {
+            return t;
+        }
+        return new ArrayTypeInfoImpl(genericArrayType);
+    }
+
+    private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable) {
+        // 因为 没有 bindings 只能回退到上界
+        return getTypeFromAny(typeVariable.getBounds()[0]);
+    }
+
+    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType) {
+        // 回退到上界
+        return getTypeFromAny(wildcardType.getUpperBounds()[0]);
     }
 
     ///
@@ -82,26 +111,11 @@ public final class ScxReflect {
     }
 
     ///
-    private static TypeInfo getTypeFromParameterizedType(ParameterizedType type) {
-        var t = TYPE_CACHE.get(type);
-        if (t != null) {
-            return t;
-        }
-        return new ClassInfoImpl(type);
-    }
-
-    ///
     private static TypeInfo getTypeFromGenericArrayType(GenericArrayType type, TypeBindings bindings) {
         return new ArrayTypeInfoImpl(type, bindings);
     }
 
-    private static TypeInfo getTypeFromGenericArrayType(GenericArrayType type) {
-        var t = TYPE_CACHE.get(type);
-        if (t != null) {
-            return t;
-        }
-        return new ArrayTypeInfoImpl(type);
-    }
+    
 
     private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable, TypeBindings bindings) {
         //尝试从从绑定中获取 否则回退到 上界
@@ -112,18 +126,13 @@ public final class ScxReflect {
         return getTypeFromAny(typeVariable.getBounds()[0], bindings);
     }
 
-    private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable) {
-        //尝试从从绑定中获取 否则回退到 上界
-        return getTypeFromAny(typeVariable.getBounds()[0]);
-    }
+  
 
     private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeBindings bindings) {
         return getTypeFromAny(wildcardType.getUpperBounds()[0], bindings);
     }
 
-    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType) {
-        return getTypeFromAny(wildcardType.getUpperBounds()[0]);
-    }
+   
 
     //********************* 只向外暴漏两个常用方法 ******************
 
