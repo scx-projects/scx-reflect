@@ -2,27 +2,12 @@ package cool.scx.reflect;
 
 import java.lang.reflect.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 
 /// 非线程安全
 public final class ScxReflect {
-
-//    /// Class 的快速路径
-//    private static final ClassValue<TypeInfo> CLASS_CACHE = new ClassValue<>() {
-//        @Override
-//        protected TypeInfo computeValue(Class<?> clazz) {
-//            if (clazz.isArray()) {
-//                return new ArrayTypeInfoImpl(clazz);
-//            }
-//            if (clazz.isPrimitive()) {
-//                return new PrimitiveTypeInfoImpl(clazz);
-//            }
-//            return new ClassInfoImpl(clazz);
-//        }
-//    };
 
     /// 携带泛型的
     static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
@@ -59,12 +44,18 @@ public final class ScxReflect {
             return t;
         }
         if (clazz.isArray()) {
-            return new ArrayTypeInfoImpl(clazz);
+            var arrayTypeInfo = new ArrayTypeInfoImpl(clazz);
+            TYPE_CACHE.put(clazz, arrayTypeInfo);
+            return arrayTypeInfo;
         }
         if (clazz.isPrimitive()) {
-            return new PrimitiveTypeInfoImpl(clazz);
+            var primitiveTypeInfo = new PrimitiveTypeInfoImpl(clazz);
+            TYPE_CACHE.put(clazz, primitiveTypeInfo);
+            return primitiveTypeInfo;
         }
-        return new ClassInfoImpl(clazz);
+        var classInfo = new ClassInfoImpl(clazz);
+        TYPE_CACHE.put(clazz, classInfo);
+        return classInfo;
     }
 
     private static TypeInfo getTypeFromParameterizedType(ParameterizedType parameterizedType) {
