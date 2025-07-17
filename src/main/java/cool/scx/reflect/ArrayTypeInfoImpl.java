@@ -4,6 +4,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 
 import static cool.scx.reflect.ScxReflect.TYPE_CACHE;
+import static cool.scx.reflect.ScxReflect.getTypeFromClass;
 
 /// ArrayTypeInfoImpl
 ///
@@ -17,7 +18,7 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     ArrayTypeInfoImpl(Class<?> type) {
         // 我们假设 此处 type 已经是 Class.isArray 过滤后的 
         this.rawClass = type;
-        this.componentType = ScxReflect.getType(this.rawClass.componentType());
+        this.componentType = getTypeFromClass(this.rawClass.componentType());
     }
 
     //todo 这个构造函数可能有问题
@@ -25,7 +26,7 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     ArrayTypeInfoImpl(GenericArrayType type, TypeBindings bindings) {
         TYPE_CACHE.put(TypeKey.createTypeKey(type, bindings), this);
 
-        this.componentType = ScxReflect.getType(type.getGenericComponentType(), bindings);
+        this.componentType = ScxReflect.getTypeFromAny(type.getGenericComponentType(), bindings);
         // 这里虚拟一个没有泛型的数组类型, 但因为 java 数组是协变的所以问题不大
         this.rawClass = Array.newInstance(this.componentType.rawClass(), 0).getClass();
     }
