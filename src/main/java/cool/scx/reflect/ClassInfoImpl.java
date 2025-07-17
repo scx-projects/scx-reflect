@@ -69,12 +69,33 @@ final class ClassInfoImpl implements ClassInfo {
 
     }
 
-    // todo 这个构造函数有无限递归的问题
-    /// 根据 ParameterizedType 创建
+    ClassInfoImpl(ParameterizedType type) {
+        // 提前缓存半成品 以便在 bindings 中可以递归引用
+        TYPE_CACHE.put(type, this);
+
+        // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class, 此处强转安全
+        this.rawClass = (Class<?>) type.getRawType();
+        this.bindings = _findBindings(type);
+
+        this.name = this.rawClass.getName();
+
+        var accessFlags = this.rawClass.accessFlags();
+        this.accessModifier = _findAccessModifier(accessFlags);
+        this.classKind = _findClassKind(this.rawClass, accessFlags);
+        this.isAbstract = accessFlags.contains(ABSTRACT);
+        this.isFinal = accessFlags.contains(FINAL);
+        this.isStatic = accessFlags.contains(STATIC);
+        this.isAnonymousClass = this.rawClass.isAnonymousClass();
+        this.isMemberClass = this.rawClass.isMemberClass();
+
+    }
+
+    /// 根据 ParameterizedType 创建 todo 这个构造函数有无限递归的问题
     ClassInfoImpl(ParameterizedType type, TypeBindings bindings) {
         TYPE_CACHE.put(TypeKey.createTypeKey(type, bindings), this);
 
-        this.rawClass = _findRawClass(type);
+        // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class, 此处强转安全
+        this.rawClass = (Class<?>) type.getRawType();
         this.bindings = _findBindings(type, bindings);
 
         this.name = this.rawClass.getName();
