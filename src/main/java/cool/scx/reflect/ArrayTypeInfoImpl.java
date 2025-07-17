@@ -14,10 +14,7 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     private final Class<?> rawClass;
     private final TypeInfo componentType;
 
-    /// 根据 Class 创建
     ArrayTypeInfoImpl(Class<?> type) {
-        TYPE_CACHE.put(type, this);
-
         // 我们假设 此处 type 已经是 Class.isArray 过滤后的 
         this.rawClass = type;
         this.componentType = ScxReflect.getType(this.rawClass.componentType());
