@@ -49,10 +49,10 @@ public final class ScxReflect {
     }
 
     private static TypeInfo getTypeFromParameterizedType(ParameterizedType parameterizedType, TypeBindings contextBindings) {
-        // 如果上下文 bindings 为 空, 直接使用原始 ParameterizedType 作为 Key, 后续可以直接通过 ParameterizedType 进行查找.
-        // 在 bindings 为空的情况下 一般我们认为 ParameterizedType 就已经携带了足够的 泛型信息 (即使是或者 TypeVariable, WildcardType)
-        // 也会因为没有 上下文 bindings 而退化为上界, 也就是说 我们可以认为 所有 没有上下文 bindings 的 ParameterizedType 
-        // 最终的类型 永远是唯一的, 所以 ParameterizedType 作为 Key 是安全的
+        // 如果上下文 bindings 为空, 则可直接使用原始 ParameterizedType 作为 key.
+        // 这是安全的, 因为即使其中包含 TypeVariable 或 WildcardType, 也会因 bindings 为空而退化为其上界, 结果是确定的.
+        // 因此, 在无上下文 bindings 的场景下, 同一个 ParameterizedType 实例总是可以映射到同一个 TypeInfo.
+        // 此处直接使用 ParameterizedType 作为缓存 key 是安全有效的 并且简化了缓存结构.
         if (contextBindings == EMPTY_BINDINGS) {
             // 使用原始 ParameterizedType 作为 Key
             var t = TYPE_CACHE.get(parameterizedType);
@@ -63,13 +63,12 @@ public final class ScxReflect {
             TYPE_CACHE.put(parameterizedType, classInfo);
             return classInfo;
         }
-        // 这里有 上下文 bindings , 不能使用简单的 ParameterizedType 来表示 , 因为 替换后的 真实类型 并不确定
-        // 我们直接使用一个 ClassInfoImpl 来实现现有类型的查找, 并同时使用这个作为后续存储的 key
-        // 注意 ClassInfoImpl 的创建实际上是轻量的, 而且携带了真正完整的 bindings
-        // 为了实现严格的 "同一个类型永远可以只获得同一个 TypeInfo",
-        // 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的 诸如 FieldInfo, MethodInfo 等.
-        // 而这些对象 实际上是会被 ClassInfoImpl 缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次.
-        // 性能不至于成为问题
+        // 当存在上下文 bindings 时, ParameterizedType 中可能包含被替换的 TypeVariable, 因此不能直接使用 ParameterizedType 作为 key.
+        // 为了实现严格的 "同一个类型 永远只对应同一个 TypeInfo",
+        // 我们使用包含上下文的 ClassInfoImpl 作为 key. 它携带了真正完整的 bindings
+        // 虽然构建 ClassInfoImpl 看似重复, 但它创建是轻量的, 并且后续可以作为 cache key 和最终值双重使用, 避免多次构建.
+        // 而且 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的对象, 诸如 FieldInfo, MethodInfo 等.
+        // 而这些对象 实际上是会被 ClassInfoImpl 内部缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次, 性能不至于成为问题.
         var classInfo = new ClassInfoImpl(parameterizedType, contextBindings);
         var t = TYPE_CACHE.get(classInfo);
         if (t != null) {
