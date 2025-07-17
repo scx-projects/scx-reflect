@@ -1,10 +1,7 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
@@ -14,37 +11,21 @@ import static java.util.Collections.addAll;
 /// 内部构建辅助类
 final class ReflectSupport {
 
-    public static TypeInfo _findComponentType(Type type, TypeBindings bindings) {
-        // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
-        var componentType = switch (type) {
-            case Class<?> c -> c.componentType();
-            case GenericArrayType g -> g.getGenericComponentType();
-            default -> throw new IllegalArgumentException("unsupported type: " + type);
-        };
-        return ScxReflect.getType(componentType, bindings);
+    public static TypeBindings _findBindings(ParameterizedType type) {
+        // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
+        //这里我们假设 typeParameters 和 actualTypeArguments 的长度和顺序是完全一一对应的
+        var typeVariables = ((Class<?>) type.getRawType()).getTypeParameters();
+        var actualTypeArguments = type.getActualTypeArguments();
+        var typeInfos = new TypeInfo[actualTypeArguments.length];
+        for (int i = 0; i < actualTypeArguments.length; i = i + 1) {
+            var actualTypeArgument = actualTypeArguments[i];
+            var typeInfo = ScxReflect.getTypeFromAny(actualTypeArgument);
+            typeInfos[i] = typeInfo;
+        }
+        return new TypeBindingsImpl(typeVariables, typeInfos);
     }
 
-    public static Class<?> _findArrayRawClass(Type type, TypeInfo componentType) {
-        // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
-        return switch (type) {
-            case Class<?> c -> c;
-            // 泛型数组我们尝试使用已经具象化的类型来处理
-            case GenericArrayType g -> Array.newInstance(componentType.rawClass(), 0).getClass();
-            default -> throw new IllegalArgumentException("unsupported type: " + type);
-        };
-    }
-
-    public static Class<?> _findRawClass(Type type) {
-        // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
-        return switch (type) {
-            case Class<?> c -> c;
-            // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
-            case ParameterizedType p -> (Class<?>) p.getRawType();
-            default -> throw new IllegalArgumentException("unsupported type: " + type);
-        };
-    }
-
-    public static TypeBindings _findBindings(Type type, TypeBindings bindings) {
+    public static TypeBindings _findBindings(Type type, TypeBindings contextBindings) {
         // 我们假设 此处 type 已经被正确过滤了 所以不做过多判断了
         switch (type) {
             // Class 没有 bindings 的概念
@@ -59,7 +40,7 @@ final class ReflectSupport {
                 var typeInfos = new TypeInfo[actualTypeArguments.length];
                 for (int i = 0; i < actualTypeArguments.length; i = i + 1) {
                     var actualTypeArgument = actualTypeArguments[i];
-                    var typeInfo = ScxReflect.getType(actualTypeArgument, bindings);
+                    var typeInfo = ScxReflect.getTypeFromAny(actualTypeArgument, contextBindings);
                     typeInfos[i] = typeInfo;
                 }
                 return new TypeBindingsImpl(typeVariables, typeInfos);
@@ -101,7 +82,7 @@ final class ReflectSupport {
         var superClass = rawClass.getGenericSuperclass();
         // superClass 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
-        return superClass != null ? (ClassInfo) ScxReflect.getType(superClass, bindings) : null;
+        return superClass != null ? (ClassInfo) ScxReflect.getTypeFromAny(superClass, bindings) : null;
     }
 
     public static ClassInfo[] _findInterfaces(Class<?> rawClass, TypeBindings bindings) {
@@ -110,7 +91,7 @@ final class ReflectSupport {
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
         var result = new ClassInfo[interfaces.length];
         for (int i = 0; i < interfaces.length; i = i + 1) {
-            result[i] = (ClassInfo) ScxReflect.getType(interfaces[i], bindings);
+            result[i] = (ClassInfo) ScxReflect.getTypeFromAny(interfaces[i], bindings);
         }
         return result;
     }
