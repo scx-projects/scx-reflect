@@ -10,7 +10,7 @@ import static java.lang.reflect.AccessFlag.*;
 ///
 /// @author scx567888
 /// @version 0.0.1
-public final class ClassInfoImpl implements ClassInfo {
+final class ClassInfoImpl implements ClassInfo {
 
     // TypeInfo
     private final Class<?> rawClass;
@@ -68,7 +68,7 @@ public final class ClassInfoImpl implements ClassInfo {
 
     }
 
-    public ClassInfoImpl(ParameterizedType parameterizedType, TypeResolutionContext context) {
+    ClassInfoImpl(ParameterizedType parameterizedType, TypeResolutionContext context) {
         // 添加半成品对象, 用于支持 _findBindings 中的递归泛型解析
         context.inProgressTypes().put(parameterizedType, this);
 
