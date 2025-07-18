@@ -268,7 +268,7 @@ public final class ClassInfoImpl implements ClassInfo {
     @Override
     public String toString() {
         //内部类使用全名, 否则使用短名
-        var baseName = isAnonymousClass ? name : rawClass.getName();
+        var baseName = isAnonymousClass ? name : rawClass.getSimpleName();
         //没有 bindings
         if (bindings.isEmpty()) {
             return baseName;
