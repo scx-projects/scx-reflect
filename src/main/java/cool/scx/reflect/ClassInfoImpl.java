@@ -1,9 +1,6 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
@@ -13,7 +10,7 @@ import static java.lang.reflect.AccessFlag.*;
 ///
 /// @author scx567888
 /// @version 0.0.1
-final class ClassInfoImpl implements ClassInfo {
+public final class ClassInfoImpl implements ClassInfo {
 
     // TypeInfo
     private final Class<?> rawClass;
@@ -71,8 +68,8 @@ final class ClassInfoImpl implements ClassInfo {
 
     }
 
-    ClassInfoImpl(ParameterizedType parameterizedType, TypeResolutionContext context) {
-        //添加半成品对象, 用于支持 _findBindings 中的递归泛型解析
+    public ClassInfoImpl(ParameterizedType parameterizedType, TypeResolutionContext context) {
+        // 添加半成品对象, 用于支持 _findBindings 中的递归泛型解析
         context.inProgressTypes().put(parameterizedType, this);
 
         // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class, 此处强转安全
@@ -250,7 +247,6 @@ final class ClassInfoImpl implements ClassInfo {
         return recordComponents.clone();
     }
 
-    //todo 有问题
     @Override
     public boolean equals(Object object) {
         if (object == this) {
@@ -262,7 +258,6 @@ final class ClassInfoImpl implements ClassInfo {
         return false;
     }
 
-    //todo 有问题
     @Override
     public int hashCode() {
         int result = rawClass.hashCode();
@@ -270,49 +265,26 @@ final class ClassInfoImpl implements ClassInfo {
         return result;
     }
 
-    //todo 有问题
     @Override
     public String toString() {
-        return toString(new HashSet<>());
-    }
-
-    //todo 有问题
-    private String toString(Set<TypeInfo> visited) {
-        //内部类使用全名
-        if (isAnonymousClass) {
-            return name;
-        }
-        //没有 bindings 使用短名
-        var shortName = rawClass.getSimpleName();
+        //内部类使用全名, 否则使用短名
+        var baseName = isAnonymousClass ? name : rawClass.getName();
+        //没有 bindings
         if (bindings.isEmpty()) {
-            return shortName;
+            return baseName;
         }
-
-        // 避免递归
-        if (!visited.add(this)) {
-            return null;
-        }
-        try {
-            var typeArgs = new ArrayList<String>();
-            var typeInfos = bindings.typeInfos();
-            for (int i = 0; i < typeInfos.length; i = i + 1) {
-                var typeInfo = typeInfos[i];
-                if (typeInfo instanceof ClassInfoImpl c) {
-                    var str = c.toString(visited); // 递归调用 with visited
-                    // 表示递归引用了 这里使用 泛型参数名称替换
-                    if (str == null) {
-                        typeArgs.add(bindings.typeVariables()[i].getName());
-                    } else {
-                        typeArgs.add(str);
-                    }
-                } else {
-                    typeArgs.add(typeInfo.toString());
-                }
+        //有 bindings 拼接泛型
+        var sb = new StringBuilder(baseName);
+        sb.append('<');
+        var typeInfos = bindings.typeInfos();
+        for (int i = 0; i < typeInfos.length; i = i + 1) {
+            if (i > 0) {
+                sb.append(',');
             }
-            return shortName + "<" + String.join(", ", typeArgs) + ">";
-        } finally {
-            visited.remove(this);
+            sb.append(typeInfos[i].toString());
         }
+        sb.append(">");
+        return sb.toString();
     }
 
 }
