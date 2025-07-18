@@ -13,7 +13,7 @@ public final class TypeFactory {
     public static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
 
     // 仅做分发
-    static TypeInfo getTypeFromAny(Type type, TypeResolutionContext context) {
+    public static TypeInfo getTypeFromAny(Type type, TypeResolutionContext context) {
         return switch (type) {
             case Class<?> c -> getTypeFromClass(c);
             case ParameterizedType p -> getTypeFromParameterizedType(p, context);
@@ -25,7 +25,7 @@ public final class TypeFactory {
     }
 
     // Class 永远不存在 bindings
-    static TypeInfo getTypeFromClass(Class<?> clazz) {
+    public static TypeInfo getTypeFromClass(Class<?> clazz) {
         // 使用原始 Class 作为 key, 后续可以直接通过 Class 进行查找,
         // 这种类型不会携带任何泛型上下文, 天然是可重用的.
         // 因此可以安全地作为缓存 key, 且便于后续快速查找, 避免重复构造.
@@ -48,7 +48,7 @@ public final class TypeFactory {
         return classInfo;
     }
 
-    private static TypeInfo getTypeFromParameterizedType(ParameterizedType parameterizedType, TypeResolutionContext context) {
+    public static TypeInfo getTypeFromParameterizedType(ParameterizedType parameterizedType, TypeResolutionContext context) {
         // 如果上下文 bindings 为空, 则可直接使用原始 ParameterizedType 作为 key.
         // 这是安全的, 因为即使其中包含 TypeVariable 或 WildcardType, 也会因 bindings 为空而退化为其上界, 结果是确定的.
         // 因此, 在无上下文 bindings 的场景下, 同一个 ParameterizedType 实例总是可以映射到同一个 TypeInfo.
@@ -110,7 +110,42 @@ public final class TypeFactory {
         return tryOptimizeCache(arrayTypeInfo, arrayTypeInfo);
     }
 
-    private static boolean canReuseRawClass(ArrayTypeInfo arrayTypeInfo) {
+    public static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable, TypeResolutionContext context) {
+        // 尝试从上下文 bindings 获取已绑定的类型变量类型, 若无法获取，则使用其上界 (第一个 bound) 进行退化处理.
+        // 这种退化是合理且安全的, 因为在 Java 泛型系统中也是这么退化的.
+        var typeInfo = context.bindings().get(typeVariable);
+        if (typeInfo != null) {
+            return typeInfo;
+        }
+        var bound = typeVariable.getBounds()[0];
+        // 这里我们检测是否发生了递归泛型引用
+        var classInfo = context.inProgressTypes().get(bound);
+        if (classInfo != null) {
+            // 这里我们 不直接返回 classInfo, 因为这样实际上并不会解决递归泛型引用的问题
+            // 我们只是把递归泛型引用的问题从 ParameterizedType 中转移到了 classInfo 中,
+            // 本质上没有解决任何问题, 所以此处返回 rawClass, 也就是没有泛型的版本, 以便彻底消解 泛型递归引用
+            return getTypeFromClass(classInfo.rawClass());
+        }
+        return getTypeFromAny(bound, context);
+    }
+
+    public static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeResolutionContext context) {
+        // 通配符类型理论上 还具有下界, 但是我们在反射系统中通常只想知道 "这个类型到底能存储什么".
+        // 所以此处忽略下界, 直接退化为上界.
+        var bound = wildcardType.getUpperBounds()[0];
+        // 处理可能发生的递归泛型引用
+        var classInfo = context.inProgressTypes().get(bound);
+        // 这里我们检测是否发生了递归泛型引用
+        if (classInfo != null) {
+            // 这里我们 不直接返回 classInfo, 因为这样实际上并不会解决递归泛型引用的问题
+            // 我们只是把递归泛型引用的问题从 ParameterizedType 中转移到了 classInfo 中,
+            // 本质上没有解决任何问题, 所以此处返回 rawClass, 也就是没有泛型的版本, 以便彻底消解 泛型递归引用
+            return getTypeFromClass(classInfo.rawClass());
+        }
+        return getTypeFromAny(bound, context);
+    }
+
+    public static boolean canReuseRawClass(ArrayTypeInfo arrayTypeInfo) {
         var componentType = arrayTypeInfo.componentType();
         // 基本类型必不存在泛型
         if (componentType instanceof PrimitiveTypeInfo) {
@@ -128,7 +163,7 @@ public final class TypeFactory {
     }
 
     // 尝试优化缓存
-    private static TypeInfo tryOptimizeCache(ArrayTypeInfoImpl arrayTypeInfo, Object typeKey) {
+    public static TypeInfo tryOptimizeCache(ArrayTypeInfoImpl arrayTypeInfo, Object typeKey) {
         // 如果可以优化, 我们会将 arrayTypeInfo 同时缓存为 typeKey 和 rawClass 两份.
         // 如果 rawClass 已经存在缓存, 说明此前已有等价类型被缓存, 我们直接复用旧的.
         // 否则, 将当前类型写入两个 key.
@@ -153,41 +188,6 @@ public final class TypeFactory {
             TYPE_CACHE.put(typeKey, arrayTypeInfo);
             return arrayTypeInfo;
         }
-    }
-
-    private static TypeInfo getTypeFromTypeVariable(TypeVariable<?> typeVariable, TypeResolutionContext context) {
-        // 尝试从上下文 bindings 获取已绑定的类型变量类型, 若无法获取，则使用其上界 (第一个 bound) 进行退化处理.
-        // 这种退化是合理且安全的, 因为在 Java 泛型系统中也是这么退化的.
-        var typeInfo = context.bindings().get(typeVariable);
-        if (typeInfo != null) {
-            return typeInfo;
-        }
-        var bound = typeVariable.getBounds()[0];
-        // 这里我们检测是否发生了递归泛型引用
-        var classInfo = context.inProgressTypes().get(bound);
-        if (classInfo != null) {
-            // 这里我们 不直接返回 classInfo, 因为这样实际上并不会解决递归泛型引用的问题
-            // 我们只是把递归泛型引用的问题从 ParameterizedType 中转移到了 classInfo 中,
-            // 本质上没有解决任何问题, 所以此处返回 rawClass, 也就是没有泛型的版本, 以便彻底消解 泛型递归引用
-            return getTypeFromClass(classInfo.rawClass());
-        }
-        return getTypeFromAny(bound, context);
-    }
-
-    private static TypeInfo getTypeFromWildcardType(WildcardType wildcardType, TypeResolutionContext context) {
-        // 通配符类型理论上 还具有下界, 但是我们在反射系统中通常只想知道 "这个类型到底能存储什么".
-        // 所以此处忽略下界, 直接退化为上界.
-        var bound = wildcardType.getUpperBounds()[0];
-        // 处理可能发生的递归泛型引用
-        var classInfo = context.inProgressTypes().get(bound);
-        // 这里我们检测是否发生了递归泛型引用
-        if (classInfo != null) {
-            // 这里我们 不直接返回 classInfo, 因为这样实际上并不会解决递归泛型引用的问题
-            // 我们只是把递归泛型引用的问题从 ParameterizedType 中转移到了 classInfo 中,
-            // 本质上没有解决任何问题, 所以此处返回 rawClass, 也就是没有泛型的版本, 以便彻底消解 泛型递归引用
-            return getTypeFromClass(classInfo.rawClass());
-        }
-        return getTypeFromAny(bound, context);
     }
 
 }
