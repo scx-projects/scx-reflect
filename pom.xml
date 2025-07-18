@@ -77,6 +77,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>cool.scx</groupId>
+            <artifactId>scx-collections</artifactId>
+            <version>4.0.1</version>
+        </dependency>
+
     </dependencies>
 
     <properties>
