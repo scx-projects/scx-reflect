@@ -163,10 +163,13 @@ public final class TypeFactory {
             return typeInfo;
         }
         var bound = typeVariable.getBounds()[0];
-        // 处理可能发生的递归泛型引用
+        // 这里我们检测是否发生了递归泛型引用
         var classInfo = context.inProgressTypes().get(bound);
         if (classInfo != null) {
-            return classInfo;
+            // 这里我们 不直接返回 classInfo, 因为这样实际上并不会解决递归泛型引用的问题
+            // 我们只是把递归泛型引用的问题从 ParameterizedType 中转移到了 classInfo 中,
+            // 本质上没有解决任何问题, 所以此处返回 rawClass, 也就是没有泛型的版本, 以便彻底消解 泛型递归引用
+            return getTypeFromClass(classInfo.rawClass());
         }
         return getTypeFromAny(bound, context);
     }
@@ -177,8 +180,12 @@ public final class TypeFactory {
         var bound = wildcardType.getUpperBounds()[0];
         // 处理可能发生的递归泛型引用
         var classInfo = context.inProgressTypes().get(bound);
+        // 这里我们检测是否发生了递归泛型引用
         if (classInfo != null) {
-            return classInfo;
+            // 这里我们 不直接返回 classInfo, 因为这样实际上并不会解决递归泛型引用的问题
+            // 我们只是把递归泛型引用的问题从 ParameterizedType 中转移到了 classInfo 中,
+            // 本质上没有解决任何问题, 所以此处返回 rawClass, 也就是没有泛型的版本, 以便彻底消解 泛型递归引用
+            return getTypeFromClass(classInfo.rawClass());
         }
         return getTypeFromAny(bound, context);
     }
