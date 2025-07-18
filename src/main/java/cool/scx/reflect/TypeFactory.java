@@ -91,23 +91,13 @@ public final class TypeFactory {
     }
 
     private static TypeInfo getTypeFromGenericArrayType(GenericArrayType genericArrayType, TypeResolutionContext context) {
-        // 当上下文 bindings 为空时, GenericArrayType 是可以安全地作为 key 的.
-        // 因为没有上下文替换, 其组件类型是确定的, 我们可以直接使用其作为缓存 key.
-        // 同时可以尝试优化缓存: 
-        // 若组件类型不包含泛型 (即是基本类型或非泛型类), 我们还可以将其 rawClass 作为额外的 key, 进行双重缓存.
-        if (context.bindings() == EMPTY_BINDINGS) {
-            // 使用原始 GenericArrayType 作为 Key, 这里是安全的, 因为我们没有上下文 bindings 也就不会发生替换
-            var t = TYPE_CACHE.get(genericArrayType);
-            if (t != null) {
-                return t;
-            }
-            var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, context);
-            // 这里尝试复用或提前缓存, 只有组件类型是没有任何泛型的情况下 我们才可能复用
-            return tryOptimizeCache(arrayTypeInfo, genericArrayType);
-        }
-        // 当存在上下文 bindings 时, GenericArrayType 中可能包含被替换的 TypeVariable, 因此不能直接使用 GenericArrayType 作为 key.
-        // 为了实现严格的 "同一个类型 永远只对应同一个 TypeInfo",
-        // 我们使用包含上下文的 ArrayTypeInfoImpl 作为 key. 它携带了真正完整的 bindings, 同时正确的实现了 equals 和 hashCode.
+        // 我们不能依赖 GenericArrayType 作为 key, 即使 context.bindings() == EMPTY_BINDINGS
+        // 举例 某两个 GenericArrayTypeImpl 的 genericComponentType 都是 TypeVariableImpl 类型, 
+        // 同时这两个 TypeVariableImpl 的 bounds 是相同的, 但是 genericDeclaration 却不同.
+        // 这就导致 即使两个 TypeVariableImpl 的最终推导结果一致, 但是二者的 equals 判断为 false (当然这在 TypeVariableImpl 的视角来看是合理的).
+        // 这会间接影响外层 GenericArrayTypeImpl 的 等价性判断. 造成缓存失效并重复构建 ArrayTypeInfoImpl.
+        // 为了实现严格的 "同一个类型 永远只对应同一个 TypeInfo", 我们使用包含上下文的 ArrayTypeInfoImpl 作为 key.
+        // 它携带了真正完整的 bindings, 同时正确的实现了 equals 和 hashCode. (只比较 componentType)
         // 虽然构建 ArrayTypeInfoImpl 看似重复, 但它创建是轻量的, 并且后续可以作为 cache key 和最终值双重使用, 避免多次构建.
         // 而且 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的对象, 诸如 FieldInfo, MethodInfo 等.
         // 而这些对象 实际上是会被 ClassInfoImpl 内部缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次, 性能不至于成为问题.
