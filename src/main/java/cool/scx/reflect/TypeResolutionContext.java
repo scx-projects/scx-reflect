@@ -27,13 +27,13 @@ import java.util.Map;
 /// 仍通过 `inProgressTypes` 缓存构建中的对象, 但在检测到递归时,
 /// 返回其原始类 (rawClass) 对应的不带泛型参数的 `TypeInfo`.
 /// 该方式可彻底避免 ClassInfo 中的递归引用, 也方便后续逻辑的实现.
-public final class TypeResolutionContext {
+final class TypeResolutionContext {
 
     private final TypeBindings bindings;
     // 正在解析的半成品 ClassInfo, 用于解决递归问题
     private Map<Type, ClassInfo> inProgressTypes;
 
-    public TypeResolutionContext(TypeBindings bindings) {
+    TypeResolutionContext(TypeBindings bindings) {
         this.bindings = bindings;
     }
 

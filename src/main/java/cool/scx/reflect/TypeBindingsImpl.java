@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
 ///
 /// @author scx567888
 /// @version 0.0.1
-public final class TypeBindingsImpl implements TypeBindings {
+final class TypeBindingsImpl implements TypeBindings {
 
     public static final TypeBindings EMPTY_BINDINGS = new TypeBindingsImpl(new TypeVariable[0], new TypeInfo[0]);
 
