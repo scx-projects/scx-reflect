@@ -8,12 +8,12 @@ import java.util.Map;
 ///
 /// 理论上 是可能存在 一个 ParameterizedType 的泛型参数 是自身的情况
 /// 比如一个类定义如下:
-/// `public class Node<T extends Node<T>> { }`
+/// `public class Node<T extends Node<T>> {}`
 ///
 /// `Type type = Node.class.getTypeParameters()[0].getBounds()[0];`
 ///
 /// 这时 `type` 的 泛型参数实际上就是 自引用的
-/// 
+///
 /// 如何解决递归泛型引用 ?
 ///
 /// 1. 自引用解析为自引用 (不推荐)
@@ -25,12 +25,11 @@ import java.util.Map;
 ///    不过这种方式虽然能完成对象的构建, 但本质上只是将递归从 ParameterizedType 转移到了 ClassInfo,
 ///    本质并上没有解决循环引用的问题, 同时会导致 classInfo 的 hashCode, equals, toString 难以实现甚至栈溢出.
 ///    所以这种方案放弃 !!!
-/// 
+///
 /// 2. 自引用解析为无泛型版本 (当前做法)
 ///    基本流程和方案 1 基本相同, 仍使用 inProgressTypes 缓存构建中对象, 但在检测到递归引用时.
-///    不返回正在解析中的 classInfo, 而是返回原始类 (rawClass) 对应的 TypeInfo.
-///    同时这种方案中实际上 classInfo 中是根本不存在自引用的, 所以  hashCode, equals 以及 toString 方法可以按照正常逻辑编写
-///
+///    不返回正在解析中的 classInfo, 而是返回其原始类 (rawClass) 对应的 TypeInfo.
+///    同时这种方案中实际上 classInfo 中是根本不存在自引用的, 所以  hashCode, equals 以及 toString 方法可以正常实现.
 public final class TypeResolutionContext {
 
     private final TypeBindings bindings;
