@@ -10,8 +10,6 @@ import org.testng.annotations.Test;
 import java.lang.reflect.Type;
 import java.util.List;
 
-//import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
-
 public class RecursionTest {
 
     public static class Node<T extends Node<T>> {

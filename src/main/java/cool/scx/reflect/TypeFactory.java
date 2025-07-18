@@ -7,7 +7,7 @@ import java.util.Map;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 
 /// 非线程安全
-public final class TypeFactory {
+final class TypeFactory {
 
     // Key 可能是 Class, ParameterizedType, ArrayTypeInfo, ClassInfo
     public static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
