@@ -4,32 +4,33 @@ import java.lang.reflect.Type;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-/// 解析上下文
-///
-/// 理论上 是可能存在 一个 ParameterizedType 的泛型参数 是自身的情况
-/// 比如一个类定义如下:
-/// `public class Node<T extends Node<T>> {}`
-///
-/// `Type type = Node.class.getTypeParameters()[0].getBounds()[0];`
-///
-/// 这时 `type` 的 泛型参数实际上就是 自引用的
-///
-/// 如何解决递归泛型引用 ?
-///
-/// 1. 自引用解析为自引用 (不推荐)
-///
-///    我们可以通过 在 ClassInfoImpl 构造函数中 提前缓存半成品 也就是 利用 inProgressTypes 的方式来绕过.
-///    在 {@link ReflectSupport#_findBindings} → {@link TypeFactory#getTypeFromAny} 的解析流程中, 会递归触发对类型变量的绑定解析.
-///    在 {@link TypeFactory#getTypeFromTypeVariable} 和 {@link TypeFactory#getTypeFromWildcardType} 分支中
-///    我们可以利用 inProgressTypes 中已存在的半成品对象 直接返回正在解析中的 classInfo, 以此成功构建出一个 带有递归泛型引用的 classInfo.
-///    不过这种方式虽然能完成对象的构建, 但本质上只是将递归从 ParameterizedType 转移到了 ClassInfo,
-///    本质并上没有解决循环引用的问题, 同时会导致 classInfo 的 hashCode, equals, toString 难以实现甚至栈溢出.
-///    所以这种方案放弃 !!!
-///
-/// 2. 自引用解析为无泛型版本 (当前做法)
-///    基本流程和方案 1 基本相同, 仍使用 inProgressTypes 缓存构建中对象, 但在检测到递归引用时.
-///    不返回正在解析中的 classInfo, 而是返回其原始类 (rawClass) 对应的 TypeInfo.
-///    同时这种方案中实际上 classInfo 中是根本不存在自引用的, 所以  hashCode, equals 以及 toString 方法可以正常实现.
+/**
+ * 类型解析上下文，用于支持 {@link TypeFactory} 构建复杂泛型结构时的类型变量绑定与递归检测。
+ *
+ * <p>在 Java 的类型系统中，理论上存在泛型自引用的情况，例如：
+ *
+ * <pre>{@code
+ * public class Node<T extends Node<T>> {}
+ * Type type = Node.class.getTypeParameters()[0].getBounds()[0];
+ * }</pre>
+ *
+ * 此时 {@code type} 的上界为 {@code Node<T>}，即自引用。
+ *
+ * <p>如何避免递归泛型引用带来的无限循环问题？我们尝试了两种策略：
+ *
+ * <h3>方案 1：允许自引用（已放弃）</h3>
+ * 在 {@link ClassInfoImpl} 构造函数中使用 {@code inProgressTypes} 提前缓存半成品对象。
+ * 在 {@link ReflectSupport#_findBindings} → {@link TypeFactory#getTypeFromAny} → {@link TypeFactory#getTypeFromTypeVariable} 或 {@link TypeFactory#getTypeFromWildcardType}
+ * 等递归路径中返回该半成品 ClassInfo，从而构建出自引用结构。
+ *
+ * 但这种方式只是将循环从 {@link java.lang.reflect.ParameterizedType} 层转移到了 {@link ClassInfo} 中，
+ * 并没有实质解决问题，会导致 {@code hashCode}、{@code equals}、{@code toString} 等方法复杂甚至爆栈，因此不推荐。
+ *
+ * <h3>方案 2：退化为原始类型（当前使用）</h3>
+ * 仍通过 {@code inProgressTypes} 缓存构建中的对象，但在检测到递归时，
+ * 返回其原始类（rawClass）对应的不带泛型参数的 {@code TypeInfo}。
+ * 该方式可彻底避免 ClassInfo 中的循环结构，从而保证后续逻辑的稳定与简洁实现。
+ */
 public final class TypeResolutionContext {
 
     private final TypeBindings bindings;
