@@ -10,42 +10,17 @@ public final class ScxReflect {
 
     /// 根据 Class 获取 TypeInfo
     public static TypeInfo getType(Class<?> type) {
-        var sss= getTypeFromClass(type);
-        //todo 测试代码
-        if (sss instanceof ClassInfo classInfo) {
-            classInfo.allFields();
-            classInfo.allMethods();
-            classInfo.allInterfaces();
-            classInfo.allSuperClasses();    
-        }
-        return sss;
+        return getTypeFromClass(type);
     }
 
-
-    /// 根据 Class 获取 TypeInfo
+    /// 根据 Type 获取 TypeInfo
     public static TypeInfo getType(Type type) {
-        var sss= getTypeFromAny(type,new TypeResolutionContext(EMPTY_BINDINGS));
-        //todo 测试代码
-        if (sss instanceof ClassInfo classInfo) {
-            classInfo.fields();
-            classInfo.methods();
-            classInfo.superClass();
-            classInfo.interfaces();
-        }
-        return sss;
+        return getTypeFromAny(type,new TypeResolutionContext(EMPTY_BINDINGS));
     }
 
     /// 根据 TypeReference 获取 TypeInfo
     public static TypeInfo getType(TypeReference<?> typeReference) {
-        var sss= getTypeFromAny(typeReference.getType(), new TypeResolutionContext(EMPTY_BINDINGS));
-        //todo 测试代码
-        if (sss instanceof ClassInfo classInfo) {
-            classInfo.fields();
-            classInfo.methods();
-            classInfo.superClass();
-            classInfo.interfaces();
-        }
-        return sss;
+        return getTypeFromAny(typeReference.getType(), new TypeResolutionContext(EMPTY_BINDINGS));
     }
 
 }
