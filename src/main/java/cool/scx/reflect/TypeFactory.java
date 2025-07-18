@@ -158,18 +158,13 @@ public final class TypeFactory {
     public static boolean canReuseRawClass(ArrayTypeInfo arrayTypeInfo) {
         var componentType = arrayTypeInfo.componentType();
         // 基本类型必不存在泛型
-        if (componentType instanceof PrimitiveTypeInfo) {
-            return true;
-        }
-        // 普通类是否存在泛型 
-        if (componentType instanceof ClassInfo classInfo) {
-            return classInfo.bindings() == EMPTY_BINDINGS;
-        }
-        // 多维数组需要递归判断
-        if (componentType instanceof ArrayTypeInfo innerArray) {
-            return canReuseRawClass(innerArray);
-        }
-        return false;
+        return switch (componentType) {
+            case PrimitiveTypeInfo _ -> true;
+            // 普通类是否存在泛型 
+            case ClassInfo classInfo -> classInfo.bindings() == EMPTY_BINDINGS;
+            // 多维数组需要递归判断
+            case ArrayTypeInfo innerArray -> canReuseRawClass(innerArray);
+        };
     }
 
     // 尝试优化缓存
