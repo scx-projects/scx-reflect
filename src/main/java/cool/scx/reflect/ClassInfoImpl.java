@@ -279,7 +279,7 @@ public final class ClassInfoImpl implements ClassInfo {
         var typeInfos = bindings.typeInfos();
         for (int i = 0; i < typeInfos.length; i = i + 1) {
             if (i > 0) {
-                sb.append(',');
+                sb.append(", ");
             }
             sb.append(typeInfos[i].toString());
         }

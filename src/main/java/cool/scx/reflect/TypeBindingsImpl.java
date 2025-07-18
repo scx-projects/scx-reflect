@@ -18,7 +18,7 @@ public final class TypeBindingsImpl implements TypeBindings {
     private final TypeInfo[] typeInfos;
 
     TypeBindingsImpl(TypeVariable<?>[] typeVariables, TypeInfo[] typeInfos) {
-        //此处我们假设 typeVariables 和 typeInfos 是长度相等 顺序正确对应的
+        // 此处我们假设 typeVariables 和 typeInfos 是长度相等 顺序正确对应的
         this.typeVariables = typeVariables;
         this.typeInfos = typeInfos;
     }
