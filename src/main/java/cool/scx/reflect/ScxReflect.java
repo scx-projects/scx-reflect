@@ -15,7 +15,7 @@ public final class ScxReflect {
 
     /// 根据 Type 获取 TypeInfo
     public static TypeInfo getType(Type type) {
-        return getTypeFromAny(type,new TypeResolutionContext(EMPTY_BINDINGS));
+        return getTypeFromAny(type, new TypeResolutionContext(EMPTY_BINDINGS));
     }
 
     /// 根据 TypeReference 获取 TypeInfo

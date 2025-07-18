@@ -12,17 +12,6 @@ import java.util.List;
 
 public class RecursionTest {
 
-    public static class Node<T extends Node<T>> {
-        public T node;
-        public Node<T> next;
-        public List<Node<T>> children;
-        public List<T> parent;
-    }
-
-    public static class S<T> {
-        public List<T> ccc;
-    }
-
     public static void main(String[] args) {
         test1();
         test2();
@@ -42,6 +31,17 @@ public class RecursionTest {
         var type1 = (ClassInfo) ScxReflect.getType(new TypeReference<S<String>>() {});
         var type2 = (ClassInfo) ScxReflect.getType(new TypeReference<List<String>>() {});
         Assert.assertTrue(type1.fields()[0].fieldType() == type2);
+    }
+
+    public static class Node<T extends Node<T>> {
+        public T node;
+        public Node<T> next;
+        public List<Node<T>> children;
+        public List<T> parent;
+    }
+
+    public static class S<T> {
+        public List<T> ccc;
     }
 
 }
