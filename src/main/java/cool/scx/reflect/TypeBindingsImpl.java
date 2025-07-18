@@ -1,10 +1,7 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.TypeVariable;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /// TypeBindingsImpl
 ///
@@ -78,6 +75,7 @@ final class TypeBindingsImpl implements TypeBindings {
         return new TypeBindingsIterator(this);
     }
 
+    //todo 有问题
     @Override
     public boolean equals(Object object) {
         if (object == this) {
@@ -89,13 +87,20 @@ final class TypeBindingsImpl implements TypeBindings {
         return false;
     }
 
+    //todo 有问题
     @Override
     public int hashCode() {
         int result = Arrays.hashCode(typeVariables);
-        result = 31 * result + Arrays.hashCode(typeInfos);
+        int typeInfosHash = 1;
+        for (var t : typeInfos) {
+            // 此处使用 System.identityHashCode 而不是 TypeInfo.hashCode 是为了防止递归引用栈溢出
+            result = 31 * result + System.identityHashCode(t);
+        }
+        result = 31 * result + typeInfosHash;
         return result;
     }
 
+    //todo 有问题
     @Override
     public String toString() {
         var sb = new StringBuilder();
