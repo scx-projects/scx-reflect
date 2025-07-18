@@ -16,7 +16,7 @@ import static java.util.Collections.addAll;
 /// 内部构建辅助类
 final class ReflectSupport {
 
-    public static TypeBindings _findBindings(ParameterizedType type, TypeBindings contextBindings) {
+    public static TypeBindings _findBindings(ParameterizedType type, TypeResolutionContext context) {
         // 我们假设 ParameterizedType 不是用户自定义的 那么 getRawType 的返回值实际上永远都是 Class
         var typeVariables = ((Class<?>) type.getRawType()).getTypeParameters();
         // 这里我们假设 typeParameters 和 actualTypeArguments 的长度和顺序是完全一一对应的
@@ -24,7 +24,7 @@ final class ReflectSupport {
         var typeInfos = new TypeInfo[actualTypeArguments.length];
         for (int i = 0; i < actualTypeArguments.length; i = i + 1) {
             var actualTypeArgument = actualTypeArguments[i];
-            var typeInfo = getTypeFromAny(actualTypeArgument, contextBindings);
+            var typeInfo = getTypeFromAny(actualTypeArgument, context);
             typeInfos[i] = typeInfo;
         }
         return new TypeBindingsImpl(typeVariables, typeInfos);
@@ -63,7 +63,7 @@ final class ReflectSupport {
         var superClass = rawClass.getGenericSuperclass();
         // superClass 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
-        return superClass != null ? (ClassInfo) getTypeFromAny(superClass, contextBindings) : null;
+        return superClass != null ? (ClassInfo) getTypeFromAny(superClass, new TypeResolutionContext(contextBindings)) : null;
     }
 
     public static ClassInfo[] _findInterfaces(Class<?> rawClass, TypeBindings contextBindings) {
@@ -72,7 +72,7 @@ final class ReflectSupport {
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
         var result = new ClassInfo[interfaces.length];
         for (int i = 0; i < interfaces.length; i = i + 1) {
-            result[i] = (ClassInfo) getTypeFromAny(interfaces[i], contextBindings);
+            result[i] = (ClassInfo) getTypeFromAny(interfaces[i], new TypeResolutionContext(contextBindings));
         }
         return result;
     }

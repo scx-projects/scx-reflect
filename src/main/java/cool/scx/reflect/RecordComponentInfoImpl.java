@@ -15,7 +15,7 @@ final class RecordComponentInfoImpl implements RecordComponentInfo {
         this.rawRecordComponent = recordComponent;
         this.declaringClass = declaringClass;
         this.name = this.rawRecordComponent.getName();
-        this.recordComponentType = getTypeFromAny(this.rawRecordComponent.getGenericType(), this.declaringClass.bindings());
+        this.recordComponentType = getTypeFromAny(this.rawRecordComponent.getGenericType(), new TypeResolutionContext(this.declaringClass.bindings()));
     }
 
     @Override

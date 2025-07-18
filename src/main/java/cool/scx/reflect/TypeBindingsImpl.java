@@ -12,13 +12,13 @@ import java.util.NoSuchElementException;
 /// @version 0.0.1
 final class TypeBindingsImpl implements TypeBindings {
 
-    static final TypeBindings EMPTY_BINDINGS = new TypeBindingsImpl(new TypeVariable[0], new TypeInfo[0]);
+    public static final TypeBindings EMPTY_BINDINGS = new TypeBindingsImpl(new TypeVariable[0], new TypeInfo[0]);
 
     private final TypeVariable<?>[] typeVariables;
     private final TypeInfo[] typeInfos;
 
     TypeBindingsImpl(TypeVariable<?>[] typeVariables, TypeInfo[] typeInfos) {
-        //此处我们假设 typeVariables 和 typeInfos 是长度相等 顺序正确对应的
+        // 此处我们假设 typeVariables 和 typeInfos 是长度相等 顺序正确对应的
         this.typeVariables = typeVariables;
         this.typeInfos = typeInfos;
     }
@@ -104,7 +104,7 @@ final class TypeBindingsImpl implements TypeBindings {
             if (i > 0) {
                 sb.append(", ");
             }
-            sb.append(typeVariables[i].getName()).append('=').append(typeInfos[i]);
+            sb.append(typeVariables[i].getName()).append("=").append(typeInfos[i].toString());
         }
         sb.append('}');
         return sb.toString();

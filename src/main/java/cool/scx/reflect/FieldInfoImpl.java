@@ -29,7 +29,7 @@ final class FieldInfoImpl implements FieldInfo {
         this.accessModifier = _findAccessModifier(accessFlags);
         this.isFinal = accessFlags.contains(FINAL);
         this.isStatic = accessFlags.contains(STATIC);
-        this.fieldType = getTypeFromAny(this.rawField.getGenericType(), this.declaringClass.bindings());
+        this.fieldType = getTypeFromAny(this.rawField.getGenericType(), new TypeResolutionContext(this.declaringClass.bindings()));
     }
 
     @Override

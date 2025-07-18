@@ -19,7 +19,7 @@ final class ParameterInfoImpl implements ParameterInfo {
         this.rawParameter = parameter;
         this.declaringExecutable = declaringExecutable;
         this.name = this.rawParameter.getName();
-        this.parameterType = getTypeFromAny(this.rawParameter.getParameterizedType(), this.declaringExecutable.declaringClass().bindings());
+        this.parameterType = getTypeFromAny(this.rawParameter.getParameterizedType(), new TypeResolutionContext(this.declaringExecutable.declaringClass().bindings()));
     }
 
     @Override
