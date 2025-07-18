@@ -89,7 +89,6 @@ public final class TypeBindingsImpl implements TypeBindings {
         return false;
     }
 
-    //todo 有问题
     @Override
     public int hashCode() {
         int result = Arrays.hashCode(typeVariables);
