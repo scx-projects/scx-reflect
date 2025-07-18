@@ -60,8 +60,18 @@ public final class TypeFactory {
                 return t;
             }
             var classInfo = new ClassInfoImpl(parameterizedType, context);
-            TYPE_CACHE.put(parameterizedType, classInfo);
-            return classInfo;
+            // 检测有可能已经有对应的 ClassInfo 
+            var oldTypeInfo = TYPE_CACHE.get(classInfo);
+            // 没有我们缓存两份, 一份 ParameterizedType 的, 一份 ClassInfo 的
+            if (oldTypeInfo == null) {
+                TYPE_CACHE.put(parameterizedType, classInfo);
+                TYPE_CACHE.put(classInfo, classInfo);
+                return classInfo;
+            } else {
+                // 如果有了 当前的 classInfo 就没意义了 直接替换为旧的
+                TYPE_CACHE.put(parameterizedType, oldTypeInfo);
+                return oldTypeInfo;
+            }
         }
         // 当存在上下文 bindings 时, ParameterizedType 中可能包含被替换的 TypeVariable, 因此不能直接使用 ParameterizedType 作为 key.
         // 为了实现严格的 "同一个类型 永远只对应同一个 TypeInfo",
