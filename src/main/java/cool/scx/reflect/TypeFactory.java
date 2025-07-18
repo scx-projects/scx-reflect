@@ -9,7 +9,7 @@ import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 /// 非线程安全
 public final class TypeFactory {
 
-    // Key 可能是 Class, ParameterizedType, GenericArrayType, ArrayTypeInfo, ClassInfo
+    // Key 可能是 Class, ParameterizedType, ArrayTypeInfo, ClassInfo
     public static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
 
     // 仅做分发
@@ -158,7 +158,7 @@ public final class TypeFactory {
     }
 
     // 尝试优化缓存
-    public static TypeInfo tryOptimizeCache(ArrayTypeInfoImpl arrayTypeInfo, Object typeKey) {
+    public static TypeInfo tryOptimizeCache(ArrayTypeInfoImpl arrayTypeInfo, ArrayTypeInfoImpl typeKey) {
         // 如果可以优化, 我们会将 arrayTypeInfo 同时缓存为 typeKey 和 rawClass 两份.
         // 如果 rawClass 已经存在缓存, 说明此前已有等价类型被缓存, 我们直接复用旧的.
         // 否则, 将当前类型写入两个 key.
