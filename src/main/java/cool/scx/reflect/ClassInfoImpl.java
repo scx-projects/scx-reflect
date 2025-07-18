@@ -250,6 +250,7 @@ final class ClassInfoImpl implements ClassInfo {
         return recordComponents.clone();
     }
 
+    //todo 有问题
     @Override
     public boolean equals(Object object) {
         if (object == this) {
@@ -261,6 +262,7 @@ final class ClassInfoImpl implements ClassInfo {
         return false;
     }
 
+    //todo 有问题
     @Override
     public int hashCode() {
         int result = rawClass.hashCode();
@@ -268,11 +270,13 @@ final class ClassInfoImpl implements ClassInfo {
         return result;
     }
 
+    //todo 有问题
     @Override
     public String toString() {
         return toString(new HashSet<>());
     }
 
+    //todo 有问题
     private String toString(Set<TypeInfo> visited) {
         //内部类使用全名
         if (isAnonymousClass) {
