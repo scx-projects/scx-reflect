@@ -1,15 +1,18 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.TypeVariable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 /// TypeBindingsImpl
 ///
 /// @author scx567888
 /// @version 0.0.1
-final class TypeBindingsImpl implements TypeBindings {
+public final class TypeBindingsImpl implements TypeBindings {
 
-    static final TypeBindings EMPTY_BINDINGS = new TypeBindingsImpl(new TypeVariable[0], new TypeInfo[0]);
+    public static final TypeBindings EMPTY_BINDINGS = new TypeBindingsImpl(new TypeVariable[0], new TypeInfo[0]);
 
     private final TypeVariable<?>[] typeVariables;
     private final TypeInfo[] typeInfos;
@@ -75,7 +78,6 @@ final class TypeBindingsImpl implements TypeBindings {
         return new TypeBindingsIterator(this);
     }
 
-    //todo 有问题
     @Override
     public boolean equals(Object object) {
         if (object == this) {
@@ -91,16 +93,10 @@ final class TypeBindingsImpl implements TypeBindings {
     @Override
     public int hashCode() {
         int result = Arrays.hashCode(typeVariables);
-        int typeInfosHash = 1;
-        for (var t : typeInfos) {
-            // 此处使用 System.identityHashCode 而不是 TypeInfo.hashCode 是为了防止递归引用栈溢出
-            result = 31 * result + System.identityHashCode(t);
-        }
-        result = 31 * result + typeInfosHash;
+        result = 31 * result + Arrays.hashCode(typeInfos);
         return result;
     }
 
-    //todo 有问题
     @Override
     public String toString() {
         var sb = new StringBuilder();
@@ -109,7 +105,7 @@ final class TypeBindingsImpl implements TypeBindings {
             if (i > 0) {
                 sb.append(", ");
             }
-            sb.append(typeVariables[i].getName()).append('=').append(typeInfos[i]);
+            sb.append(typeVariables[i].getName()).append("=").append(typeInfos[i].toString());
         }
         sb.append('}');
         return sb.toString();
