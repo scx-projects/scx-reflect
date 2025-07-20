@@ -4,6 +4,10 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.RecordComponent;
 
+///  RecordComponentInfo
+///
+/// @author scx567888
+/// @version 0.0.1
 public sealed interface RecordComponentInfo extends AnnotatedElementInfo permits RecordComponentInfoImpl {
 
     /// 原始 RecordComponent
