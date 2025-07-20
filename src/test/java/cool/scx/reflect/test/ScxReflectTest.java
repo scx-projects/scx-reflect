@@ -25,8 +25,8 @@ public class ScxReflectTest {
 
     @Test
     public static void testEnum() {
-        ClassInfo typeA = (ClassInfo) ScxReflect.typeof(EE.A.getClass());
-        ClassInfo typeB = (ClassInfo) ScxReflect.typeof(EE.B.getClass());
+        ClassInfo typeA = (ClassInfo) ScxReflect.typeOf(EE.A.getClass());
+        ClassInfo typeB = (ClassInfo) ScxReflect.typeOf(EE.B.getClass());
         //这里 直接 isEnum 无法正确判断 枚举的 匿名内部类 
         Assert.assertEquals(EE.B.getClass().isEnum(), false);
         // TypeInfo 可以正确判断
@@ -36,8 +36,8 @@ public class ScxReflectTest {
 
     @Test
     public static void testInterFace() {
-        ClassInfo typeG = (ClassInfo) ScxReflect.typeof(GGG.class);
-        ClassInfo typeH = (ClassInfo) ScxReflect.typeof(GGH.class);
+        ClassInfo typeG = (ClassInfo) ScxReflect.typeOf(GGG.class);
+        ClassInfo typeH = (ClassInfo) ScxReflect.typeOf(GGH.class);
 
         MethodInfo[] gMethods = typeG.methods();
 
@@ -51,16 +51,16 @@ public class ScxReflectTest {
 
     @Test
     public static void test3() {
-        var type = (ClassInfo) ScxReflect.typeof(CCC.R.class);
+        var type = (ClassInfo) ScxReflect.typeOf(CCC.R.class);
         var fieldInfos = type.allFields();
         Assert.assertEquals(fieldInfos.length, 1);
     }
 
     @Test
     public static void test4() {
-        var typeA = (ClassInfo) ScxReflect.typeof(CCC.A.class);
-        var typeC = (ClassInfo) ScxReflect.typeof(CCC.C.class);
-        var typeD = (ClassInfo) ScxReflect.typeof(CCC.D.class);
+        var typeA = (ClassInfo) ScxReflect.typeOf(CCC.A.class);
+        var typeC = (ClassInfo) ScxReflect.typeOf(CCC.C.class);
+        var typeD = (ClassInfo) ScxReflect.typeOf(CCC.D.class);
 
         var annotationsA = typeA.findAnnotations(CCC.AA.class);
         var annotationsC = typeC.findAnnotations(CCC.AA.class);
@@ -73,17 +73,17 @@ public class ScxReflectTest {
     @Test
     public static void test5() {
 
-        var type = (ClassInfo) ScxReflect.typeof(CCC.GH.class);
+        var type = (ClassInfo) ScxReflect.typeOf(CCC.GH.class);
 
         Assert.assertEquals(type.allFields().length, 0);
 
-        var type4 = (ClassInfo) ScxReflect.typeof(CCC.GAG.class);
+        var type4 = (ClassInfo) ScxReflect.typeOf(CCC.GAG.class);
 
         FieldInfo[] fields = type4.fields();
         FieldInfo[] allFields = type4.allFields();
 
 
-        var typeInfo = (ClassInfo) ScxReflect.typeof(new TypeReference<CCC.ComplexGenericClass<Map<String, ? extends Number[]>, List<? super Integer>, Set<Double>>>() {
+        var typeInfo = (ClassInfo) ScxReflect.typeOf(new TypeReference<CCC.ComplexGenericClass<Map<String, ? extends Number[]>, List<? super Integer>, Set<Double>>>() {
         });
 
         FieldInfo[] fields1 = typeInfo.fields();
@@ -97,15 +97,15 @@ public class ScxReflectTest {
         TypeInfo classInfo;
         for (int i = 0; i < 9999; i = i + 1) {
 
-            classInfo = ScxReflect.typeof(CCC.C.class);
-            classInfo = ScxReflect.typeof(CCC.A.class);
-            classInfo = ScxReflect.typeof(CCC.D.class);
-            classInfo = ScxReflect.typeof(CCC.GH.class);
-            classInfo = ScxReflect.typeof(CCC.GG.class);
-            classInfo = ScxReflect.typeof(CCC.GAG.class);
-            classInfo = ScxReflect.typeof(CCC.BGH.class);
-            classInfo = ScxReflect.typeof(CCC.CGC.class);
-            classInfo = ScxReflect.typeof(CCC.ComplexGenericClass.class);
+            classInfo = ScxReflect.typeOf(CCC.C.class);
+            classInfo = ScxReflect.typeOf(CCC.A.class);
+            classInfo = ScxReflect.typeOf(CCC.D.class);
+            classInfo = ScxReflect.typeOf(CCC.GH.class);
+            classInfo = ScxReflect.typeOf(CCC.GG.class);
+            classInfo = ScxReflect.typeOf(CCC.GAG.class);
+            classInfo = ScxReflect.typeOf(CCC.BGH.class);
+            classInfo = ScxReflect.typeOf(CCC.CGC.class);
+            classInfo = ScxReflect.typeOf(CCC.ComplexGenericClass.class);
         }
 
         System.out.println((System.nanoTime() - l) / 1000_000);

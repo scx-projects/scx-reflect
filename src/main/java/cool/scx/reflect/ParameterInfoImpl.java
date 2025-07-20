@@ -2,7 +2,7 @@ package cool.scx.reflect;
 
 import java.lang.reflect.Parameter;
 
-import static cool.scx.reflect.TypeFactory.typeofFromAny;
+import static cool.scx.reflect.TypeFactory.typeOfFromAny;
 
 /// ParameterInfoImpl
 ///
@@ -19,7 +19,7 @@ final class ParameterInfoImpl implements ParameterInfo {
         this.rawParameter = parameter;
         this.declaringExecutable = declaringExecutable;
         this.name = this.rawParameter.getName();
-        this.parameterType = typeofFromAny(this.rawParameter.getParameterizedType(), new TypeResolutionContext(this.declaringExecutable.declaringClass().bindings()));
+        this.parameterType = typeOfFromAny(this.rawParameter.getParameterizedType(), new TypeResolutionContext(this.declaringExecutable.declaringClass().bindings()));
     }
 
     @Override

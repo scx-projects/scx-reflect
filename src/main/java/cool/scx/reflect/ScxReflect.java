@@ -3,8 +3,8 @@ package cool.scx.reflect;
 import java.lang.reflect.Type;
 
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
-import static cool.scx.reflect.TypeFactory.typeofFromAny;
-import static cool.scx.reflect.TypeFactory.typeofFromClass;
+import static cool.scx.reflect.TypeFactory.typeOfFromAny;
+import static cool.scx.reflect.TypeFactory.typeOfFromClass;
 
 /// ScxReflect
 ///
@@ -13,18 +13,18 @@ import static cool.scx.reflect.TypeFactory.typeofFromClass;
 public final class ScxReflect {
 
     /// 根据 Class 获取 TypeInfo
-    public static TypeInfo typeof(Class<?> type) {
-        return typeofFromClass(type);
+    public static TypeInfo typeOf(Class<?> type) {
+        return typeOfFromClass(type);
     }
 
     /// 根据 Type 获取 TypeInfo
-    public static TypeInfo typeof(Type type) {
-        return typeofFromAny(type, new TypeResolutionContext(EMPTY_BINDINGS));
+    public static TypeInfo typeOf(Type type) {
+        return typeOfFromAny(type, new TypeResolutionContext(EMPTY_BINDINGS));
     }
 
     /// 根据 TypeReference 获取 TypeInfo
-    public static TypeInfo typeof(TypeReference<?> typeReference) {
-        return typeofFromAny(typeReference.getType(), new TypeResolutionContext(EMPTY_BINDINGS));
+    public static TypeInfo typeOf(TypeReference<?> typeReference) {
+        return typeOfFromAny(typeReference.getType(), new TypeResolutionContext(EMPTY_BINDINGS));
     }
 
 }

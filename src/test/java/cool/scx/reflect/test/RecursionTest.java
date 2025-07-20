@@ -20,16 +20,16 @@ public class RecursionTest {
     @Test
     public static void test1() {
         Type type = Node.class.getTypeParameters()[0].getBounds()[0];
-        var type1 = (ClassInfo) ScxReflect.typeof(type);
-        var type2 = ScxReflect.typeof(type);
+        var type1 = (ClassInfo) ScxReflect.typeOf(type);
+        var type2 = ScxReflect.typeOf(type);
         Assert.assertEquals(type1, type2);
         FieldInfo[] fieldInfos = type1.allFields();
     }
 
     @Test
     public static void test2() {
-        var type1 = (ClassInfo) ScxReflect.typeof(new TypeReference<S<String>>() {});
-        var type2 = (ClassInfo) ScxReflect.typeof(new TypeReference<List<String>>() {});
+        var type1 = (ClassInfo) ScxReflect.typeOf(new TypeReference<S<String>>() {});
+        var type2 = (ClassInfo) ScxReflect.typeOf(new TypeReference<List<String>>() {});
         Assert.assertTrue(type1.fields()[0].fieldType() == type2);
     }
 
