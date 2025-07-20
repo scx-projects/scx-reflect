@@ -3,7 +3,7 @@ package cool.scx.reflect;
 import java.lang.reflect.Field;
 
 import static cool.scx.reflect.ReflectSupport._findAccessModifier;
-import static cool.scx.reflect.TypeFactory.typeOfFromAny;
+import static cool.scx.reflect.TypeFactory.typeOfAny;
 import static java.lang.reflect.AccessFlag.FINAL;
 import static java.lang.reflect.AccessFlag.STATIC;
 
@@ -29,7 +29,7 @@ final class FieldInfoImpl implements FieldInfo {
         this.accessModifier = _findAccessModifier(accessFlags);
         this.isFinal = accessFlags.contains(FINAL);
         this.isStatic = accessFlags.contains(STATIC);
-        this.fieldType = typeOfFromAny(this.rawField.getGenericType(), new TypeResolutionContext(this.declaringClass.bindings()));
+        this.fieldType = typeOfAny(this.rawField.getGenericType(), new TypeResolutionContext(this.declaringClass.bindings()));
     }
 
     @Override

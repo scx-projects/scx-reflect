@@ -16,19 +16,19 @@ final class TypeFactory {
     public static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
 
     // 仅做分发
-    public static TypeInfo typeOfFromAny(Type type, TypeResolutionContext context) {
+    public static TypeInfo typeOfAny(Type type, TypeResolutionContext context) {
         return switch (type) {
-            case Class<?> c -> typeOfFromClass(c);
-            case ParameterizedType p -> typeOfFromParameterizedType(p, context);
-            case GenericArrayType g -> typeOfFromGenericArrayType(g, context);
-            case TypeVariable<?> t -> typeOfFromTypeVariable(t, context);
-            case WildcardType w -> typeOfFromWildcardType(w, context);
+            case Class<?> c -> typeOfClass(c);
+            case ParameterizedType p -> typeOfParameterizedType(p, context);
+            case GenericArrayType g -> typeOfGenericArrayType(g, context);
+            case TypeVariable<?> t -> typeOfTypeVariable(t, context);
+            case WildcardType w -> typeOfWildcardType(w, context);
             default -> throw new IllegalArgumentException("Unsupported type: " + type);
         };
     }
 
     // Class 永远不存在 bindings
-    public static TypeInfo typeOfFromClass(Class<?> clazz) {
+    public static TypeInfo typeOfClass(Class<?> clazz) {
         // 使用原始 Class 作为 key, 后续可以直接通过 Class 进行查找,
         // 这种类型不会携带任何泛型上下文, 天然是可重用的.
         // 因此可以安全地作为缓存 key, 且便于后续快速查找, 避免重复构造.
@@ -51,7 +51,7 @@ final class TypeFactory {
         return classInfo;
     }
 
-    public static TypeInfo typeOfFromParameterizedType(ParameterizedType parameterizedType, TypeResolutionContext context) {
+    public static TypeInfo typeOfParameterizedType(ParameterizedType parameterizedType, TypeResolutionContext context) {
         // 如果上下文 bindings 为空, 则可直接使用原始 ParameterizedType 作为 key.
         // 这是安全的, 因为即使其中包含 TypeVariable 或 WildcardType, 也会因 bindings 为空而退化为其上界, 结果是确定的.
         // 因此, 在无上下文 bindings 的场景下, 同一个 ParameterizedType 实例总是可以映射到同一个 TypeInfo.
@@ -93,7 +93,7 @@ final class TypeFactory {
         return classInfo;
     }
 
-    private static TypeInfo typeOfFromGenericArrayType(GenericArrayType genericArrayType, TypeResolutionContext context) {
+    private static TypeInfo typeOfGenericArrayType(GenericArrayType genericArrayType, TypeResolutionContext context) {
         // 我们不能依赖 GenericArrayType 作为 key, 即使 context.bindings() == EMPTY_BINDINGS
         // 举例 某两个 GenericArrayTypeImpl 的 genericComponentType 都是 TypeVariableImpl 类型, 
         // 同时这两个 TypeVariableImpl 的 bounds 是相同的, 但是 genericDeclaration 却不同.
@@ -113,7 +113,7 @@ final class TypeFactory {
         return tryOptimizeCache(arrayTypeInfo, arrayTypeInfo);
     }
 
-    public static TypeInfo typeOfFromTypeVariable(TypeVariable<?> typeVariable, TypeResolutionContext context) {
+    public static TypeInfo typeOfTypeVariable(TypeVariable<?> typeVariable, TypeResolutionContext context) {
         // 尝试从上下文 bindings 获取已绑定的类型变量类型, 若无法获取，则使用其上界 (第一个 bound) 进行退化处理.
         // 这种退化是合理且安全的, 因为在 Java 泛型系统中也是这么退化的.
         var typeInfo = context.bindings().get(typeVariable);
@@ -127,12 +127,12 @@ final class TypeFactory {
             // 这里我们 不直接返回 classInfo, 因为这样实际上并不会解决递归泛型引用的问题
             // 我们只是把递归泛型引用的问题从 ParameterizedType 中转移到了 classInfo 中,
             // 本质上没有解决任何问题, 所以此处返回 rawClass, 也就是没有泛型的版本, 以便彻底消解 泛型递归引用
-            return typeOfFromClass(classInfo.rawClass());
+            return typeOfClass(classInfo.rawClass());
         }
-        return typeOfFromAny(bound, context);
+        return typeOfAny(bound, context);
     }
 
-    public static TypeInfo typeOfFromWildcardType(WildcardType wildcardType, TypeResolutionContext context) {
+    public static TypeInfo typeOfWildcardType(WildcardType wildcardType, TypeResolutionContext context) {
         // 通配符类型理论上 还具有下界, 但是我们在反射系统中通常只想知道 "这个类型到底能存储什么".
         // 所以此处忽略下界, 直接退化为上界.
         var bound = wildcardType.getUpperBounds()[0];
@@ -143,9 +143,9 @@ final class TypeFactory {
             // 这里我们 不直接返回 classInfo, 因为这样实际上并不会解决递归泛型引用的问题
             // 我们只是把递归泛型引用的问题从 ParameterizedType 中转移到了 classInfo 中,
             // 本质上没有解决任何问题, 所以此处返回 rawClass, 也就是没有泛型的版本, 以便彻底消解 泛型递归引用
-            return typeOfFromClass(classInfo.rawClass());
+            return typeOfClass(classInfo.rawClass());
         }
-        return typeOfFromAny(bound, context);
+        return typeOfAny(bound, context);
     }
 
     public static boolean canReuseRawClass(ArrayTypeInfo arrayTypeInfo) {
