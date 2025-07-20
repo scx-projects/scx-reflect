@@ -3,8 +3,8 @@ package cool.scx.reflect;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
 
-import static cool.scx.reflect.TypeFactory.getTypeFromAny;
-import static cool.scx.reflect.TypeFactory.getTypeFromClass;
+import static cool.scx.reflect.TypeFactory.typeOfAny;
+import static cool.scx.reflect.TypeFactory.typeOfClass;
 
 /// ArrayTypeInfoImpl
 ///
@@ -18,11 +18,11 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
     ArrayTypeInfoImpl(Class<?> arrayClass) {
         // 我们假设 此处 type 已经是 Class.isArray 过滤后的
         this.rawClass = arrayClass;
-        this.componentType = getTypeFromClass(this.rawClass.componentType());
+        this.componentType = typeOfClass(this.rawClass.componentType());
     }
 
     ArrayTypeInfoImpl(GenericArrayType type, TypeResolutionContext context) {
-        this.componentType = getTypeFromAny(type.getGenericComponentType(), context);
+        this.componentType = typeOfAny(type.getGenericComponentType(), context);
         // 这里虚拟一个没有泛型的数组类型, 但因为 java 数组是协变的所以问题不大
         this.rawClass = Array.newInstance(this.componentType.rawClass(), 0).getClass();
     }

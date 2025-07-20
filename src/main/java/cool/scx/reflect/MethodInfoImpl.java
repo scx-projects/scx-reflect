@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import static cool.scx.reflect.ReflectSupport.*;
-import static cool.scx.reflect.TypeFactory.getTypeFromAny;
+import static cool.scx.reflect.TypeFactory.typeOfAny;
 import static java.lang.reflect.AccessFlag.*;
 
 /// MethodInfoImpl
@@ -41,7 +41,7 @@ final class MethodInfoImpl implements MethodInfo {
         this.isNative = accessFlags.contains(NATIVE);
         this.isDefault = this.rawMethod.isDefault();
         this.parameters = _findParameters(this.rawMethod, this);
-        this.returnType = getTypeFromAny(this.rawMethod.getGenericReturnType(), new TypeResolutionContext(this.declaringClass.bindings()));
+        this.returnType = typeOfAny(this.rawMethod.getGenericReturnType(), new TypeResolutionContext(this.declaringClass.bindings()));
     }
 
     @Override
