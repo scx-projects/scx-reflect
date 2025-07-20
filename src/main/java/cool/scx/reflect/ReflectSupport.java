@@ -10,10 +10,13 @@ import java.util.Set;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
-import static cool.scx.reflect.TypeFactory.getTypeFromAny;
+import static cool.scx.reflect.TypeFactory.typeofFromAny;
 import static java.util.Collections.addAll;
 
 /// 内部构建辅助类
+///
+/// @author scx567888
+/// @version 0.0.1
 final class ReflectSupport {
 
     public static TypeBindings _findBindings(ParameterizedType type, TypeResolutionContext context) {
@@ -24,7 +27,7 @@ final class ReflectSupport {
         var typeInfos = new TypeInfo[actualTypeArguments.length];
         for (int i = 0; i < actualTypeArguments.length; i = i + 1) {
             var actualTypeArgument = actualTypeArguments[i];
-            var typeInfo = getTypeFromAny(actualTypeArgument, context);
+            var typeInfo = typeofFromAny(actualTypeArgument, context);
             typeInfos[i] = typeInfo;
         }
         return new TypeBindingsImpl(typeVariables, typeInfos);
@@ -63,7 +66,7 @@ final class ReflectSupport {
         var superClass = rawClass.getGenericSuperclass();
         // superClass 只可能是 Class (非数组,非基本类型) 或 ParameterizedType (rawClass 同样非数组,非基本类型)
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
-        return superClass != null ? (ClassInfo) getTypeFromAny(superClass, new TypeResolutionContext(contextBindings)) : null;
+        return superClass != null ? (ClassInfo) typeofFromAny(superClass, new TypeResolutionContext(contextBindings)) : null;
     }
 
     public static ClassInfo[] _findInterfaces(Class<?> rawClass, TypeBindings contextBindings) {
@@ -72,7 +75,7 @@ final class ReflectSupport {
         // 所以我们 使用 getType 返回的也必然是 ClassInfo, 此处强转安全
         var result = new ClassInfo[interfaces.length];
         for (int i = 0; i < interfaces.length; i = i + 1) {
-            result[i] = (ClassInfo) getTypeFromAny(interfaces[i], new TypeResolutionContext(contextBindings));
+            result[i] = (ClassInfo) typeofFromAny(interfaces[i], new TypeResolutionContext(contextBindings));
         }
         return result;
     }
