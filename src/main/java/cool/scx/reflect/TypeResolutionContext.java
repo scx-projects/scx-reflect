@@ -1,8 +1,8 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.Type;
-import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /// 类型解析上下文, 用于支持 [TypeFactory] 构建复杂泛型结构时的类型变量绑定与递归检测.
 ///
@@ -46,7 +46,8 @@ final class TypeResolutionContext {
 
     public Map<Type, ClassInfo> inProgressTypes() {
         if (inProgressTypes == null) {
-            inProgressTypes = new IdentityHashMap<>();
+            // 为了线程安全
+            inProgressTypes = new ConcurrentHashMap<>();
         }
         return inProgressTypes;
     }
