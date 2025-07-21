@@ -13,6 +13,13 @@ import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 public final class TypeFactory {
 
     // Key 可能是 Class, ParameterizedType, GenericArrayType, ArrayTypeInfo, ClassInfo
+    // 其中 ParameterizedType 和 GenericArrayType 是存在 最终推导类型一致但是 本身的 equals 却不一致的情况
+    // 举例 某两个 GenericArrayTypeImpl 的 genericComponentType 都是 TypeVariableImpl 类型, 
+    // 同时这两个 TypeVariableImpl 的 bounds 是相同的, 但是 genericDeclaration 却不同.
+    // 这就导致 即使两个 TypeVariableImpl 的最终推导结果一致, 但是二者的 equals 判断为 false (当然这在 TypeVariableImpl 的视角来看是合理的).
+    // 这会间接影响外层 GenericArrayTypeImpl 的 等价性判断.
+    // 但是这其实无所谓 因为 ParameterizedType 和 GenericArrayType 本质上在此处只是用来加速 查找.
+    // 即使没有命中缓存 也会进行推导后类型查找, 不存在重复创建多个本质上完全一致的 TypeInfo 的风险
     public static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
 
     // 仅做分发
