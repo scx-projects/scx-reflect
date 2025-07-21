@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 
-/// TypeFactory (非线程安全)
+/// TypeFactory (线程安全)
 ///
 /// @author scx567888
 /// @version 0.0.1
