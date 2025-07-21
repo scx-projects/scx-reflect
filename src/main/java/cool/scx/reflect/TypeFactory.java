@@ -47,6 +47,7 @@ public final class TypeFactory {
         // 此处我们并不冗余缓存 ClassInfoImpl, ArrayTypeInfoImpl 之类,
         // 因为在 typeOfParameterizedType 或 typeOfGenericArrayType 中会冗余缓存
         // 我们只要在一个构建路径中冗余缓存就够了
+        // 先尝试快速无锁读
         var result = TYPE_CACHE.get(clazz);
         if (result != null) {
             return result;
