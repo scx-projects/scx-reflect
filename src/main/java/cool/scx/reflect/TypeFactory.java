@@ -1,8 +1,10 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.*;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 
@@ -10,7 +12,7 @@ import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 ///
 /// @author scx567888
 /// @version 0.0.1
-final class TypeFactory {
+public final class TypeFactory {
 
     // Key 可能是 Class, ParameterizedType, GenericArrayType, ArrayTypeInfo, ClassInfo
     // 其中 ParameterizedType 和 GenericArrayType 是存在 最终推导类型一致但是 本身的 equals 却不一致的情况
@@ -20,7 +22,10 @@ final class TypeFactory {
     // 这会间接影响外层 GenericArrayTypeImpl 的 等价性判断.
     // 但是这其实无所谓 因为 ParameterizedType 和 GenericArrayType 本质上在此处只是用来加速 查找.
     // 即使没有命中缓存 也会进行推导后类型查找, 不存在重复创建多个本质上完全一致的 TypeInfo 的风险
-    public static final Map<Object, TypeInfo> TYPE_CACHE = new HashMap<>();
+    public static final Map<Object, TypeInfo> TYPE_CACHE = new ConcurrentHashMap<>();
+
+    // 写入锁
+    private static final Lock LOCK = new ReentrantLock();
 
     // 仅做分发
     public static TypeInfo typeOfAny(Type type, TypeResolutionContext context) {
@@ -42,23 +47,30 @@ final class TypeFactory {
         // 此处我们并不冗余缓存 ClassInfoImpl, ArrayTypeInfoImpl 之类,
         // 因为在 typeOfParameterizedType 或 typeOfGenericArrayType 中会冗余缓存
         // 我们只要在一个构建路径中冗余缓存就够了
-        var t = TYPE_CACHE.get(clazz);
-        if (t != null) {
-            return t;
+        var result = TYPE_CACHE.get(clazz);
+        if (result != null) {
+            return result;
         }
-        if (clazz.isArray()) {
-            var arrayTypeInfo = new ArrayTypeInfoImpl(clazz);
-            TYPE_CACHE.put(clazz, arrayTypeInfo);
-            return arrayTypeInfo;
+        LOCK.lock();
+        try {
+            // 双重检查
+            result = TYPE_CACHE.get(clazz);
+            if (result != null) {
+                return result;
+            }
+            // 创建新的实例
+            if (clazz.isArray()) {
+                result = new ArrayTypeInfoImpl(clazz);
+            } else if (clazz.isPrimitive()) {
+                result = new PrimitiveTypeInfoImpl(clazz);
+            } else {
+                result = new ClassInfoImpl(clazz);
+            }
+            TYPE_CACHE.put(clazz, result);
+            return result;
+        } finally {
+            LOCK.unlock();
         }
-        if (clazz.isPrimitive()) {
-            var primitiveTypeInfo = new PrimitiveTypeInfoImpl(clazz);
-            TYPE_CACHE.put(clazz, primitiveTypeInfo);
-            return primitiveTypeInfo;
-        }
-        var classInfo = new ClassInfoImpl(clazz);
-        TYPE_CACHE.put(clazz, classInfo);
-        return classInfo;
     }
 
     public static TypeInfo typeOfParameterizedType(ParameterizedType parameterizedType, TypeResolutionContext context) {
