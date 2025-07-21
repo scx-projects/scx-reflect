@@ -161,23 +161,21 @@ final class TypeFactory {
         // 这个优化不单单是 为了性能, 同时也保证了 同一个类型拿到的 TypeInfo 永远是一致的, 
         // 无论是先通过 Class 创建, 还是先通过 GenericArrayType 创建, 最终的 TypeInfo 是一致的.
         var canOptimize = canReuseRawClass(arrayTypeInfo);
-        if (canOptimize) {
-            var oldTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
-            // 没有我们缓存两份, 一份 Class 的, 一份 GenericArrayType 的
-            if (oldTypeInfo == null) {
-                TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
-                TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
-                return arrayTypeInfo;
-            } else {
-                //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的
-                TYPE_CACHE.put(arrayTypeInfo, oldTypeInfo);
-                return oldTypeInfo;
-            }
-        } else {
+        if (!canOptimize) {
             //没有优化的可能 
             TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
             return arrayTypeInfo;
         }
+        var oldArrayTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
+        if (oldArrayTypeInfo != null) {
+            //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的
+            TYPE_CACHE.put(arrayTypeInfo, oldArrayTypeInfo);
+            return oldArrayTypeInfo;
+        }
+        // 没有我们缓存两份, 一份 Class 的, 一份 GenericArrayType 的
+        TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
+        TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
+        return arrayTypeInfo;
     }
 
     public static TypeInfo typeOfTypeVariable(TypeVariable<?> typeVariable, TypeResolutionContext context) {
