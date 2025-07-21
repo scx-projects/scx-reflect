@@ -143,40 +143,52 @@ public final class TypeFactory {
         // 因此, 在无上下文 bindings 的场景下, 同一个 GenericArrayType 实例总是可以映射到同一个 TypeInfo.
         // 此处直接使用 GenericArrayType 作为缓存 key 是安全有效的 并且简化了缓存结构.
         if (context.bindings() == EMPTY_BINDINGS) {
-            var t = TYPE_CACHE.get(genericArrayType);
-            if (t != null) {
-                return t;
+            // 快速 get
+            var result = TYPE_CACHE.get(genericArrayType);
+            if (result != null) {
+                return result;
             }
-            var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, context);
-            // 检测有可能已经有对应的 ArrayTypeInfo 
-            var oldArrayTypeInfo = TYPE_CACHE.get(arrayTypeInfo);
-            if (oldArrayTypeInfo != null) {
-                // 如果有了 当前的 classInfo 就没意义了 直接替换为旧的
-                // 这里无需 优化 rawClass 因为在构建 oldArrayTypeInfo 的过程中必定已经优化过了
-                TYPE_CACHE.put(genericArrayType, oldArrayTypeInfo);
-                return oldArrayTypeInfo;
-            }
-            //判断能否优化
-            var canOptimize = canReuseRawClass(arrayTypeInfo);
-            //没有优化的可能 缓存两份
-            if (!canOptimize) {
+            LOCK.lock();
+            try {
+                // 双重检查 
+                result = TYPE_CACHE.get(genericArrayType);
+                if (result != null) {
+                    return result;
+                }
+
+                var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, context);
+                // 检测有可能已经有对应的 ArrayTypeInfo 
+                var oldArrayTypeInfo = TYPE_CACHE.get(arrayTypeInfo);
+                if (oldArrayTypeInfo != null) {
+                    // 如果有了 当前的 classInfo 就没意义了 直接替换为旧的
+                    // 这里无需 优化 rawClass 因为在构建 oldArrayTypeInfo 的过程中必定已经优化过了
+                    TYPE_CACHE.put(genericArrayType, oldArrayTypeInfo);
+                    return oldArrayTypeInfo;
+                }
+                //判断能否优化
+                var canOptimize = canReuseRawClass(arrayTypeInfo);
+                //没有优化的可能 缓存两份
+                if (!canOptimize) {
+                    TYPE_CACHE.put(genericArrayType, arrayTypeInfo);
+                    TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
+                    return arrayTypeInfo;
+                }
+                //这里继续尝试使用 rawClass 查找
+                oldArrayTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
+                if (oldArrayTypeInfo != null) {
+                    //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的, 这里缓存两份
+                    TYPE_CACHE.put(genericArrayType, oldArrayTypeInfo);
+                    TYPE_CACHE.put(arrayTypeInfo, oldArrayTypeInfo);
+                    return oldArrayTypeInfo;
+                }
+                // 全部没有我们缓存三份, 一份 Class 的, 一份 GenericArrayType 的, 一份 ArrayTypeInfoImpl
                 TYPE_CACHE.put(genericArrayType, arrayTypeInfo);
                 TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
+                TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
                 return arrayTypeInfo;
+            } finally {
+                LOCK.unlock();
             }
-            //这里继续尝试使用 rawClass 查找
-            oldArrayTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
-            if (oldArrayTypeInfo != null) {
-                //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的, 这里缓存两份
-                TYPE_CACHE.put(genericArrayType, oldArrayTypeInfo);
-                TYPE_CACHE.put(arrayTypeInfo, oldArrayTypeInfo);
-                return oldArrayTypeInfo;
-            }
-            // 全部没有我们缓存三份, 一份 Class 的, 一份 GenericArrayType 的, 一份 ArrayTypeInfoImpl
-            TYPE_CACHE.put(genericArrayType, arrayTypeInfo);
-            TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
-            TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
-            return arrayTypeInfo;
         }
         // 为了实现严格的 "同一个类型 永远只对应同一个 TypeInfo", 我们使用包含上下文的 ArrayTypeInfoImpl 作为 key.
         // 它携带了真正完整的 bindings, 同时正确的实现了 equals 和 hashCode. (只比较 componentType)
@@ -184,33 +196,47 @@ public final class TypeFactory {
         // 而且 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的对象, 诸如 FieldInfo, MethodInfo 等.
         // 而这些对象 实际上是会被 ClassInfoImpl 内部缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次, 性能不至于成为问题.
         var arrayTypeInfo = new ArrayTypeInfoImpl(genericArrayType, context);
-        var typeInfo = TYPE_CACHE.get(arrayTypeInfo);
-        if (typeInfo != null) {
-            return typeInfo;
+        // 快速 get
+        var result = TYPE_CACHE.get(arrayTypeInfo);
+        if (result != null) {
+            return result;
         }
-        // 这里尝试复用或提前缓存, 只有组件类型是没有任何泛型的情况下 我们才可能复用
-        // 如果可以优化, 我们会将 arrayTypeInfo 同时缓存为 typeKey 和 rawClass 两份.
-        // 如果 rawClass 已经存在缓存, 说明此前已有等价类型被缓存, 我们直接复用旧的.
-        // 否则, 将当前类型写入两个 key.
-        // 如果无法优化, 则仅以 typeKey 进行缓存.
-        // 这个优化不单单是 为了性能, 同时也保证了 同一个类型拿到的 TypeInfo 永远是一致的, 
-        // 无论是先通过 Class 创建, 还是先通过 GenericArrayType 创建, 最终的 TypeInfo 是一致的.
-        var canOptimize = canReuseRawClass(arrayTypeInfo);
-        if (!canOptimize) {
-            //没有优化的可能 
+        LOCK.lock();
+        try {
+            // 双重检查
+            result = TYPE_CACHE.get(arrayTypeInfo);
+            if (result != null) {
+                return result;
+            }
+
+            // 这里尝试复用或提前缓存, 只有组件类型是没有任何泛型的情况下 我们才可能复用
+            // 如果可以优化, 我们会将 arrayTypeInfo 同时缓存为 typeKey 和 rawClass 两份.
+            // 如果 rawClass 已经存在缓存, 说明此前已有等价类型被缓存, 我们直接复用旧的.
+            // 否则, 将当前类型写入两个 key.
+            // 如果无法优化, 则仅以 typeKey 进行缓存.
+            // 这个优化不单单是 为了性能, 同时也保证了 同一个类型拿到的 TypeInfo 永远是一致的, 
+            // 无论是先通过 Class 创建, 还是先通过 GenericArrayType 创建, 最终的 TypeInfo 是一致的.
+            var canOptimize = canReuseRawClass(arrayTypeInfo);
+            if (!canOptimize) {
+                //没有优化的可能 
+                TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
+                return arrayTypeInfo;
+            }
+            var oldArrayTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
+            if (oldArrayTypeInfo != null) {
+                //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的
+                TYPE_CACHE.put(arrayTypeInfo, oldArrayTypeInfo);
+                return oldArrayTypeInfo;
+            }
+            // 没有我们缓存两份, 一份 Class 的, 一份 GenericArrayType 的
             TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
+            TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
             return arrayTypeInfo;
+
+        } finally {
+            LOCK.unlock();
         }
-        var oldArrayTypeInfo = TYPE_CACHE.get(arrayTypeInfo.rawClass());
-        if (oldArrayTypeInfo != null) {
-            //如果有了 当前的 arrayTypeInfo 就没意义了 直接替换为旧的
-            TYPE_CACHE.put(arrayTypeInfo, oldArrayTypeInfo);
-            return oldArrayTypeInfo;
-        }
-        // 没有我们缓存两份, 一份 Class 的, 一份 GenericArrayType 的
-        TYPE_CACHE.put(arrayTypeInfo, arrayTypeInfo);
-        TYPE_CACHE.put(arrayTypeInfo.rawClass(), arrayTypeInfo);
-        return arrayTypeInfo;
+
     }
 
     public static TypeInfo typeOfTypeVariable(TypeVariable<?> typeVariable, TypeResolutionContext context) {
