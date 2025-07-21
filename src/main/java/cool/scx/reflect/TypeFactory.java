@@ -81,22 +81,33 @@ public final class TypeFactory {
         // 此处直接使用 ParameterizedType 作为缓存 key 是安全有效的 并且简化了缓存结构.
         if (context.bindings() == EMPTY_BINDINGS) {
             // 使用原始 ParameterizedType 作为 Key
-            var t = TYPE_CACHE.get(parameterizedType);
-            if (t != null) {
-                return t;
+            // 快速无锁读
+            var result = TYPE_CACHE.get(parameterizedType);
+            if (result != null) {
+                return result;
             }
-            var classInfo = new ClassInfoImpl(parameterizedType, context);
-            // 检测有可能已经有对应的 ClassInfo 
-            var oldTypeInfo = TYPE_CACHE.get(classInfo);
-            if (oldTypeInfo != null) {
-                // 如果有了 当前的 classInfo 就没意义了 直接替换为旧的
-                TYPE_CACHE.put(parameterizedType, oldTypeInfo);
-                return oldTypeInfo;
+            LOCK.lock();
+            try {
+                // 双重检查
+                result = TYPE_CACHE.get(parameterizedType);
+                if (result != null) {
+                    return result;
+                }
+                var classInfo = new ClassInfoImpl(parameterizedType, context);
+                // 检测有可能已经有对应的 ClassInfo 
+                var oldTypeInfo = TYPE_CACHE.get(classInfo);
+                if (oldTypeInfo != null) {
+                    // 如果有了 当前的 classInfo 就没意义了 直接替换为旧的
+                    TYPE_CACHE.put(parameterizedType, oldTypeInfo);
+                    return oldTypeInfo;
+                }
+                // 没有我们缓存两份, 一份 ParameterizedType 的, 一份 ClassInfo 的
+                TYPE_CACHE.put(parameterizedType, classInfo);
+                TYPE_CACHE.put(classInfo, classInfo);
+                return classInfo;
+            } finally {
+                LOCK.unlock();
             }
-            // 没有我们缓存两份, 一份 ParameterizedType 的, 一份 ClassInfo 的
-            TYPE_CACHE.put(parameterizedType, classInfo);
-            TYPE_CACHE.put(classInfo, classInfo);
-            return classInfo;
         }
         // 当存在上下文 bindings 时, ParameterizedType 中可能包含被替换的 TypeVariable, 因此不能直接使用 ParameterizedType 作为 key.
         // 为了实现严格的 "同一个类型 永远只对应同一个 TypeInfo",
@@ -105,14 +116,25 @@ public final class TypeFactory {
         // 而且 实际上当代码走到这里的时候 只可能是 正在初始化 ClassInfoImpl 内部的对象, 诸如 FieldInfo, MethodInfo 等.
         // 而这些对象 实际上是会被 ClassInfoImpl 内部缓存起来的, 这意味着 以下的代码实际上 并不会执行很多次, 性能不至于成为问题.
         var classInfo = new ClassInfoImpl(parameterizedType, context);
-        var t = TYPE_CACHE.get(classInfo);
-        if (t != null) {
-            return t;
+        // 快速无锁读
+        var result = TYPE_CACHE.get(classInfo);
+        if (result != null) {
+            return result;
         }
-        TYPE_CACHE.put(classInfo, classInfo);
-        // 这里我们无需像 构建 ArrayTypeInfoImpl 那样尝试优化缓存
-        // 因为 任意一个类 只有没有泛型 就永远不可能是 ParameterizedType, 根本不会走到这段代码
-        return classInfo;
+        LOCK.lock();
+        try {
+            //双重检查
+            result = TYPE_CACHE.get(classInfo);
+            if (result != null) {
+                return result;
+            }
+            TYPE_CACHE.put(classInfo, classInfo);
+            // 这里我们无需像 构建 ArrayTypeInfoImpl 那样尝试优化缓存
+            // 因为 任意一个类 只有没有泛型 就永远不可能是 ParameterizedType, 根本不会走到这段代码
+            return classInfo;
+        } finally {
+            LOCK.unlock();
+        }
     }
 
     private static TypeInfo typeOfGenericArrayType(GenericArrayType genericArrayType, TypeResolutionContext context) {
