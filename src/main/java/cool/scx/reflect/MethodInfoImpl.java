@@ -2,12 +2,14 @@ package cool.scx.reflect;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.TypeFactory.typeOfAny;
 import static java.lang.reflect.AccessFlag.*;
 
-/// MethodInfoImpl
+/// MethodInfoImpl (非线程安全)
 ///
 /// @author scx567888
 /// @version 0.0.1
@@ -26,8 +28,11 @@ final class MethodInfoImpl implements MethodInfo {
     private final ParameterInfo[] parameters;
     private final TypeInfo returnType;
 
-    private boolean superMethodLoaded;
-    private MethodInfo superMethod;
+    // 锁
+    private final Lock LOCK;
+
+    private volatile boolean superMethodLoaded;
+    private volatile MethodInfo superMethod;
 
     MethodInfoImpl(Method method, ClassInfo declaringClass) {
         this.rawMethod = method;
@@ -42,6 +47,7 @@ final class MethodInfoImpl implements MethodInfo {
         this.isDefault = this.rawMethod.isDefault();
         this.parameters = _findParameters(this.rawMethod, this);
         this.returnType = typeOfAny(this.rawMethod.getGenericReturnType(), new TypeResolutionContext(this.declaringClass.bindings()));
+        this.LOCK = new ReentrantLock();
     }
 
     @Override
@@ -102,8 +108,15 @@ final class MethodInfoImpl implements MethodInfo {
     @Override
     public MethodInfo superMethod() {
         if (!superMethodLoaded) {
-            superMethod = _findSuperMethod(this);
-            superMethodLoaded = true;
+            LOCK.lock();
+            try {
+                if (!superMethodLoaded) {
+                    superMethod = _findSuperMethod(this);
+                    superMethodLoaded = true;
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return superMethod;
     }
