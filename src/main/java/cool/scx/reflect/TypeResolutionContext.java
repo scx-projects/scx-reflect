@@ -44,6 +44,8 @@ final class TypeResolutionContext {
         return bindings;
     }
 
+    // 这个方法实际上永远不可能在多个线程中被调用
+    // 所以无需考虑线程安全 也不用加锁
     public Map<Type, ClassInfo> inProgressTypes() {
         if (inProgressTypes == null) {
             // 此处需要保证 equals 相等性 所以不能使用 IdentityHashMap
