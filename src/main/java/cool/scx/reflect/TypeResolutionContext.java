@@ -1,7 +1,7 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.Type;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /// 类型解析上下文, 用于支持 [TypeFactory] 构建复杂泛型结构时的类型变量绑定与递归检测.
@@ -46,7 +46,9 @@ final class TypeResolutionContext {
 
     public Map<Type, ClassInfo> inProgressTypes() {
         if (inProgressTypes == null) {
-            inProgressTypes = new IdentityHashMap<>();
+            // 此处需要保证 equals 相等性 所以不能使用 IdentityHashMap
+            // 不然的话会导致 复杂的递归泛型解析出现问题
+            inProgressTypes = new HashMap<>();
         }
         return inProgressTypes;
     }
