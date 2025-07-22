@@ -46,6 +46,24 @@ final class ConstructorInfoImpl implements ConstructorInfo {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof ConstructorInfoImpl that) {
+            return rawConstructor.equals(that.rawConstructor);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = ConstructorInfoImpl.class.hashCode();
+        result = 31 * result + rawConstructor.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         var sb = new StringBuilder();
 

@@ -68,6 +68,24 @@ final class FieldInfoImpl implements FieldInfo {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof FieldInfoImpl fieldInfo) {
+            return rawField.equals(fieldInfo.rawField);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = FieldInfoImpl.class.hashCode();
+        result = 31 * result + rawField.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         var sb = new StringBuilder();
 
