@@ -30,29 +30,30 @@ final class ClassInfoImpl implements ClassInfo {
     private final boolean isAnonymousClass;
     private final boolean isMemberClass;
 
-    private final Lock LOCK ;
+    // 锁
+    private final Lock LOCK;
 
     // 继承结构
-    private boolean superClassLoaded;
-    private ClassInfo superClass;
-    private ClassInfo[] interfaces;
+    private volatile boolean superClassLoaded;
+    private volatile ClassInfo superClass;
+    private volatile ClassInfo[] interfaces;
 
     // 类成员
-    private ConstructorInfo[] constructors;
-    private FieldInfo[] fields;
-    private MethodInfo[] methods;
+    private volatile ConstructorInfo[] constructors;
+    private volatile FieldInfo[] fields;
+    private volatile MethodInfo[] methods;
 
     //快捷属性
-    private ClassInfo[] allSuperClasses;
-    private ClassInfo[] allInterfaces;
-    private boolean defaultConstructorLoaded;
-    private ConstructorInfo defaultConstructor;
-    private boolean recordConstructorLoaded;
-    private ConstructorInfo recordConstructor;
-    private FieldInfo[] allFields;
-    private MethodInfo[] allMethods;
-    private ClassInfo enumClass;
-    private RecordComponentInfo[] recordComponents;
+    private volatile ClassInfo[] allSuperClasses;
+    private volatile ClassInfo[] allInterfaces;
+    private volatile boolean defaultConstructorLoaded;
+    private volatile ConstructorInfo defaultConstructor;
+    private volatile boolean recordConstructorLoaded;
+    private volatile ConstructorInfo recordConstructor;
+    private volatile FieldInfo[] allFields;
+    private volatile MethodInfo[] allMethods;
+    private volatile ClassInfo enumClass;
+    private volatile RecordComponentInfo[] recordComponents;
 
     ClassInfoImpl(Class<?> clazz) {
         // 我们假设 此处 type 已经是 !Class.isArray 并且 !Class.isPrimitive 过滤后的
