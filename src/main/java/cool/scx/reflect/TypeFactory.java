@@ -12,7 +12,7 @@ import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 ///
 /// @author scx567888
 /// @version 0.0.1
-final class TypeFactory {
+public final class TypeFactory {
 
     // Key 可能是 Class, ParameterizedType, GenericArrayType, ArrayTypeInfo, ClassInfo
     // 其中 ParameterizedType 和 GenericArrayType 是存在 最终推导类型一致但是 本身的 equals 却不一致的情况
@@ -39,6 +39,7 @@ final class TypeFactory {
         };
     }
 
+    // 线程安全
     // Class 永远不存在 bindings
     public static TypeInfo typeOfClass(Class<?> clazz) {
         // 使用原始 Class 作为 key, 后续可以直接通过 Class 进行查找,
