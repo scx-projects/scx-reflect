@@ -147,8 +147,15 @@ final class ClassInfoImpl implements ClassInfo {
     public ClassInfo superClass() {
         //此处 superClass == null 无法确定是 未加载 还是 没有 所以使用 单独字段
         if (!superClassLoaded) {
-            superClass = _findSuperClass(this.rawClass, this.bindings);
-            superClassLoaded = true;
+            LOCK.lock();
+            try {
+                if (!superClassLoaded) {
+                    superClass = _findSuperClass(this.rawClass, this.bindings);
+                    superClassLoaded = true;
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return superClass;
     }
@@ -156,7 +163,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public ClassInfo[] interfaces() {
         if (interfaces == null) {
-            interfaces = _findInterfaces(this.rawClass, this.bindings);
+            LOCK.lock();
+            try {
+                if (interfaces == null) {
+                    interfaces = _findInterfaces(this.rawClass, this.bindings);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return interfaces.clone();
     }
@@ -164,7 +178,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public ConstructorInfo[] constructors() {
         if (constructors == null) {
-            constructors = _findConstructors(this.rawClass, this);
+            LOCK.lock();
+            try {
+                if (constructors == null) {
+                    constructors = _findConstructors(this.rawClass, this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return constructors.clone();
     }
@@ -172,7 +193,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public FieldInfo[] fields() {
         if (fields == null) {
-            fields = _findFields(this.rawClass, this);
+            LOCK.lock();
+            try {
+                if (fields == null) {
+                    fields = _findFields(this.rawClass, this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return fields.clone();
     }
@@ -180,7 +208,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public MethodInfo[] methods() {
         if (methods == null) {
-            methods = _findMethods(this.rawClass, this);
+            LOCK.lock();
+            try {
+                if (methods == null) {
+                    methods = _findMethods(this.rawClass, this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return methods.clone();
     }
@@ -188,7 +223,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public ClassInfo[] allSuperClasses() {
         if (allSuperClasses == null) {
-            allSuperClasses = _findAllSuperClasses(this);
+            LOCK.lock();
+            try {
+                if (allSuperClasses == null) {
+                    allSuperClasses = _findAllSuperClasses(this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return allSuperClasses.clone();
     }
@@ -196,7 +238,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public ClassInfo[] allInterfaces() {
         if (allInterfaces == null) {
-            allInterfaces = _findAllInterfaces(this);
+            LOCK.lock();
+            try {
+                if (allInterfaces == null) {
+                    allInterfaces = _findAllInterfaces(this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return allInterfaces.clone();
     }
@@ -204,8 +253,15 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public ConstructorInfo defaultConstructor() {
         if (!defaultConstructorLoaded) {
-            defaultConstructor = _findDefaultConstructor(this);
-            defaultConstructorLoaded = true;
+            LOCK.lock();
+            try {
+                if (!defaultConstructorLoaded) {
+                    defaultConstructor = _findDefaultConstructor(this);
+                    defaultConstructorLoaded = true;
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return defaultConstructor;
     }
@@ -213,8 +269,15 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public ConstructorInfo recordConstructor() {
         if (!recordConstructorLoaded) {
-            recordConstructor = _findRecordConstructor(this);
-            recordConstructorLoaded = true;
+            LOCK.lock();
+            try {
+                if (!recordConstructorLoaded) {
+                    recordConstructor = _findRecordConstructor(this);
+                    recordConstructorLoaded = true;
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return recordConstructor;
     }
@@ -222,7 +285,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public FieldInfo[] allFields() {
         if (allFields == null) {
-            allFields = _findAllFields(this);
+            LOCK.lock();
+            try {
+                if (allFields == null) {
+                    allFields = _findAllFields(this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return allFields.clone();
     }
@@ -230,7 +300,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public MethodInfo[] allMethods() {
         if (allMethods == null) {
-            allMethods = _findAllMethods(this);
+            LOCK.lock();
+            try {
+                if (allMethods == null) {
+                    allMethods = _findAllMethods(this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return allMethods.clone();
     }
@@ -238,7 +315,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public ClassInfo enumClass() {
         if (enumClass == null) {
-            enumClass = _findEnumClass(this);
+            LOCK.lock();
+            try {
+                if (enumClass == null) {
+                    enumClass = _findEnumClass(this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return enumClass;
     }
@@ -246,7 +330,14 @@ final class ClassInfoImpl implements ClassInfo {
     @Override
     public RecordComponentInfo[] recordComponents() {
         if (recordComponents == null) {
-            recordComponents = _findRecordComponents(this);
+            LOCK.lock();
+            try {
+                if (recordComponents == null) {
+                    recordComponents = _findRecordComponents(this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
         }
         return recordComponents.clone();
     }
