@@ -13,8 +13,8 @@ public sealed interface ArrayTypeInfo extends TypeInfo permits ArrayTypeInfoImpl
 
     /// 创建数组
     @SuppressWarnings("unchecked")
-    default <A> A newArray(int size) {
-        return (A) Array.newInstance(this.componentType().rawClass(), size);
+    default <A> A newArray(int length) {
+        return (A) Array.newInstance(this.componentType().rawClass(), length);
     }
 
 }
