@@ -139,6 +139,7 @@ public final class TypeFactory {
         }
     }
 
+    // 线程安全
     public static TypeInfo typeOfGenericArrayType(GenericArrayType genericArrayType, TypeResolutionContext context) {
         // 如果上下文 bindings 为空, 则可直接使用原始 GenericArrayType 作为 key.
         // 这是安全的, 因为即使其中包含 TypeVariable 或 WildcardType, 也会因 bindings 为空而退化为其上界, 结果是确定的.
