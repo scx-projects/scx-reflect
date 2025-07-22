@@ -43,6 +43,24 @@ final class RecordComponentInfoImpl implements RecordComponentInfo {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof RecordComponentInfoImpl that) {
+            return rawRecordComponent.equals(that.rawRecordComponent);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = RecordComponentInfoImpl.class.hashCode();
+        result = 31 * result + rawRecordComponent.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         return recordComponentType.toString() + " " + name;
     }
