@@ -75,6 +75,7 @@ public final class TypeFactory {
         }
     }
 
+    // 线程安全
     public static TypeInfo typeOfParameterizedType(ParameterizedType parameterizedType, TypeResolutionContext context) {
         // 如果上下文 bindings 为空, 则可直接使用原始 ParameterizedType 作为 key.
         // 这是安全的, 因为即使其中包含 TypeVariable 或 WildcardType, 也会因 bindings 为空而退化为其上界, 结果是确定的.
@@ -138,7 +139,7 @@ public final class TypeFactory {
         }
     }
 
-    private static TypeInfo typeOfGenericArrayType(GenericArrayType genericArrayType, TypeResolutionContext context) {
+    public static TypeInfo typeOfGenericArrayType(GenericArrayType genericArrayType, TypeResolutionContext context) {
         // 如果上下文 bindings 为空, 则可直接使用原始 GenericArrayType 作为 key.
         // 这是安全的, 因为即使其中包含 TypeVariable 或 WildcardType, 也会因 bindings 为空而退化为其上界, 结果是确定的.
         // 因此, 在无上下文 bindings 的场景下, 同一个 GenericArrayType 实例总是可以映射到同一个 TypeInfo.
