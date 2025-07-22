@@ -43,6 +43,24 @@ final class ParameterInfoImpl implements ParameterInfo {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof ParameterInfoImpl that) {
+            return rawParameter.equals(that.rawParameter);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = ParameterInfoImpl.class.hashCode();
+        result = 31 * result + rawParameter.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         return parameterType.toString() + " " + name();
     }
