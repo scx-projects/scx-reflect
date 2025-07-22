@@ -122,6 +122,24 @@ final class MethodInfoImpl implements MethodInfo {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o instanceof MethodInfoImpl that) {
+            return rawMethod.equals(that.rawMethod);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = MethodInfoImpl.class.hashCode();
+        result = 31 * result + rawMethod.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         var sb = new StringBuilder();
 
