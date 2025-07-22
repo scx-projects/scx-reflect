@@ -1,12 +1,14 @@
 package cool.scx.reflect;
 
 import java.lang.reflect.ParameterizedType;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 import static java.lang.reflect.AccessFlag.*;
 
-/// ClassInfoImpl
+/// ClassInfoImpl (非线程安全)
 ///
 /// @author scx567888
 /// @version 0.0.1
@@ -27,6 +29,8 @@ final class ClassInfoImpl implements ClassInfo {
     private final boolean isStatic;
     private final boolean isAnonymousClass;
     private final boolean isMemberClass;
+
+    private final Lock LOCK ;
 
     // 继承结构
     private boolean superClassLoaded;
@@ -65,7 +69,7 @@ final class ClassInfoImpl implements ClassInfo {
         this.isStatic = accessFlags.contains(STATIC);
         this.isAnonymousClass = this.rawClass.isAnonymousClass();
         this.isMemberClass = this.rawClass.isMemberClass();
-
+        this.LOCK = new ReentrantLock();
     }
 
     ClassInfoImpl(ParameterizedType parameterizedType, TypeResolutionContext context) {
@@ -86,7 +90,7 @@ final class ClassInfoImpl implements ClassInfo {
         this.isStatic = accessFlags.contains(STATIC);
         this.isAnonymousClass = this.rawClass.isAnonymousClass();
         this.isMemberClass = this.rawClass.isMemberClass();
-
+        this.LOCK = new ReentrantLock();
     }
 
     @Override
