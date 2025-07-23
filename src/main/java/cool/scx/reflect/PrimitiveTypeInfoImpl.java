@@ -7,10 +7,12 @@ package cool.scx.reflect;
 final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
 
     private final Class<?> rawClass;
+    private final int hashCode;
 
     PrimitiveTypeInfoImpl(Class<?> primitiveClass) {
         // 我们假设 此处 primitiveClass 已经是 Class.isPrimitive 过滤后的
         this.rawClass = primitiveClass;
+        this.hashCode = this._hashCode();
     }
 
     @Override
@@ -28,12 +30,16 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
         }
         return false;
     }
-
-    @Override
-    public int hashCode() {
+    
+    private int _hashCode() {
         int result = PrimitiveTypeInfoImpl.class.hashCode();
         result = 31 * result + rawClass.hashCode();
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override
