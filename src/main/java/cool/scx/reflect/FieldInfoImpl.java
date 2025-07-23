@@ -79,7 +79,7 @@ final class FieldInfoImpl implements FieldInfo {
         }
         return false;
     }
-    
+
     private int _hashCode() {
         int result = FieldInfoImpl.class.hashCode();
         result = 31 * result + rawField.hashCode();

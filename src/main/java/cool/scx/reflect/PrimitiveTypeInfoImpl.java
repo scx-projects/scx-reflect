@@ -30,7 +30,7 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
         }
         return false;
     }
-    
+
     private int _hashCode() {
         int result = PrimitiveTypeInfoImpl.class.hashCode();
         result = 31 * result + rawClass.hashCode();
