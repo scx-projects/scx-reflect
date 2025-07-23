@@ -20,6 +20,7 @@ final class FieldInfoImpl implements FieldInfo {
     private final boolean isFinal;
     private final boolean isStatic;
     private final TypeInfo fieldType;
+    private final int hashCode;
 
     FieldInfoImpl(Field field, ClassInfo declaringClass) {
         this.rawField = field;
@@ -30,6 +31,7 @@ final class FieldInfoImpl implements FieldInfo {
         this.isFinal = accessFlags.contains(FINAL);
         this.isStatic = accessFlags.contains(STATIC);
         this.fieldType = typeOfAny(this.rawField.getGenericType(), new TypeResolutionContext(this.declaringClass.bindings()));
+        this.hashCode = this._hashCode();
     }
 
     @Override
@@ -68,21 +70,25 @@ final class FieldInfoImpl implements FieldInfo {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o instanceof FieldInfoImpl fieldInfo) {
-            return rawField.equals(fieldInfo.rawField);
+        if (object instanceof FieldInfoImpl o) {
+            return rawField.equals(o.rawField);
         }
         return false;
     }
 
-    @Override
-    public int hashCode() {
+    private int _hashCode() {
         int result = FieldInfoImpl.class.hashCode();
         result = 31 * result + rawField.hashCode();
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override

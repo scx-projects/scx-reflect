@@ -16,11 +16,13 @@ final class TypeBindingsImpl implements TypeBindings {
 
     private final TypeVariable<?>[] typeVariables;
     private final TypeInfo[] typeInfos;
+    private final int hashCode;
 
     TypeBindingsImpl(TypeVariable<?>[] typeVariables, TypeInfo[] typeInfos) {
         // 此处我们假设 typeVariables 和 typeInfos 是长度相等 顺序正确对应的
         this.typeVariables = typeVariables;
         this.typeInfos = typeInfos;
+        this.hashCode = this._hashCode();
     }
 
     @Override
@@ -83,17 +85,21 @@ final class TypeBindingsImpl implements TypeBindings {
         if (object == this) {
             return true;
         }
-        if (object instanceof TypeBindingsImpl entries) {
-            return Arrays.equals(typeVariables, entries.typeVariables) && Arrays.equals(typeInfos, entries.typeInfos);
+        if (object instanceof TypeBindingsImpl o) {
+            return Arrays.equals(typeVariables, o.typeVariables) && Arrays.equals(typeInfos, o.typeInfos);
         }
         return false;
     }
 
-    @Override
-    public int hashCode() {
+    private int _hashCode() {
         int result = Arrays.hashCode(typeVariables);
         result = 31 * result + Arrays.hashCode(typeInfos);
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override

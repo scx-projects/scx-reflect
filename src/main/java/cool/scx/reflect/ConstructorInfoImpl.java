@@ -16,6 +16,7 @@ final class ConstructorInfoImpl implements ConstructorInfo {
     private final ClassInfo declaringClass;
     private final AccessModifier accessModifier;
     private final ParameterInfo[] parameters;
+    private final int hashCode;
 
     ConstructorInfoImpl(Constructor<?> constructor, ClassInfo declaringClass) {
         this.rawConstructor = constructor;
@@ -23,6 +24,7 @@ final class ConstructorInfoImpl implements ConstructorInfo {
         var accessFlags = this.rawConstructor.accessFlags();
         this.accessModifier = _findAccessModifier(accessFlags);
         this.parameters = _findParameters(this.rawConstructor, this);
+        this.hashCode = this._hashCode();
     }
 
     @Override
@@ -46,21 +48,25 @@ final class ConstructorInfoImpl implements ConstructorInfo {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o instanceof ConstructorInfoImpl that) {
-            return rawConstructor.equals(that.rawConstructor);
+        if (object instanceof ConstructorInfoImpl o) {
+            return rawConstructor.equals(o.rawConstructor);
         }
         return false;
     }
 
-    @Override
-    public int hashCode() {
+    private int _hashCode() {
         int result = ConstructorInfoImpl.class.hashCode();
         result = 31 * result + rawConstructor.hashCode();
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override

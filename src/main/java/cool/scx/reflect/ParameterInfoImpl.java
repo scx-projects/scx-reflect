@@ -14,12 +14,14 @@ final class ParameterInfoImpl implements ParameterInfo {
     private final ExecutableInfo declaringExecutable;
     private final String name;
     private final TypeInfo parameterType;
+    private final int hashCode;
 
     ParameterInfoImpl(Parameter parameter, ExecutableInfo declaringExecutable) {
         this.rawParameter = parameter;
         this.declaringExecutable = declaringExecutable;
         this.name = this.rawParameter.getName();
         this.parameterType = typeOfAny(this.rawParameter.getParameterizedType(), new TypeResolutionContext(this.declaringExecutable.declaringClass().bindings()));
+        this.hashCode = this._hashCode();
     }
 
     @Override
@@ -43,21 +45,25 @@ final class ParameterInfoImpl implements ParameterInfo {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o instanceof ParameterInfoImpl that) {
-            return rawParameter.equals(that.rawParameter);
+        if (object instanceof ParameterInfoImpl o) {
+            return rawParameter.equals(o.rawParameter);
         }
         return false;
     }
 
-    @Override
-    public int hashCode() {
+    private int _hashCode() {
         int result = ParameterInfoImpl.class.hashCode();
         result = 31 * result + rawParameter.hashCode();
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override

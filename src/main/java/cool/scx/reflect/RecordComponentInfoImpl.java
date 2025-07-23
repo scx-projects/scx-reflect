@@ -14,12 +14,14 @@ final class RecordComponentInfoImpl implements RecordComponentInfo {
     private final ClassInfo declaringClass;
     private final String name;
     private final TypeInfo recordComponentType;
+    private final int hashCode;
 
     RecordComponentInfoImpl(RecordComponent recordComponent, ClassInfo declaringClass) {
         this.rawRecordComponent = recordComponent;
         this.declaringClass = declaringClass;
         this.name = this.rawRecordComponent.getName();
         this.recordComponentType = typeOfAny(this.rawRecordComponent.getGenericType(), new TypeResolutionContext(this.declaringClass.bindings()));
+        this.hashCode = this._hashCode();
     }
 
     @Override
@@ -43,21 +45,25 @@ final class RecordComponentInfoImpl implements RecordComponentInfo {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o instanceof RecordComponentInfoImpl that) {
-            return rawRecordComponent.equals(that.rawRecordComponent);
+        if (object instanceof RecordComponentInfoImpl o) {
+            return rawRecordComponent.equals(o.rawRecordComponent);
         }
         return false;
     }
 
-    @Override
-    public int hashCode() {
+    private int _hashCode() {
         int result = RecordComponentInfoImpl.class.hashCode();
         result = 31 * result + rawRecordComponent.hashCode();
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override

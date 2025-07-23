@@ -8,7 +8,7 @@ import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 import static java.lang.reflect.AccessFlag.*;
 
-/// ClassInfoImpl (非线程安全)
+/// ClassInfoImpl
 ///
 /// @author scx567888
 /// @version 0.0.1
@@ -32,6 +32,9 @@ final class ClassInfoImpl implements ClassInfo {
 
     // 锁
     private final Lock LOCK;
+
+    // 缓存的 hashCode
+    private final int hashCode;
 
     // 继承结构
     private volatile boolean superClassLoaded;
@@ -71,6 +74,8 @@ final class ClassInfoImpl implements ClassInfo {
         this.isAnonymousClass = this.rawClass.isAnonymousClass();
         this.isMemberClass = this.rawClass.isMemberClass();
         this.LOCK = new ReentrantLock();
+        // 缓存 hashCode
+        this.hashCode = this._hashCode();
     }
 
     ClassInfoImpl(ParameterizedType parameterizedType, TypeResolutionContext context) {
@@ -92,6 +97,8 @@ final class ClassInfoImpl implements ClassInfo {
         this.isAnonymousClass = this.rawClass.isAnonymousClass();
         this.isMemberClass = this.rawClass.isMemberClass();
         this.LOCK = new ReentrantLock();
+        // 缓存 hashCode
+        this.hashCode = this._hashCode();
     }
 
     @Override
@@ -348,17 +355,21 @@ final class ClassInfoImpl implements ClassInfo {
         if (object == this) {
             return true;
         }
-        if (object instanceof ClassInfoImpl classInfo) {
-            return rawClass == classInfo.rawClass && bindings.equals(classInfo.bindings);
+        if (object instanceof ClassInfoImpl o) {
+            return rawClass == o.rawClass && bindings.equals(o.bindings);
         }
         return false;
     }
 
-    @Override
-    public int hashCode() {
+    private int _hashCode() {
         int result = rawClass.hashCode();
         result = 31 * result + bindings.hashCode();
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override
