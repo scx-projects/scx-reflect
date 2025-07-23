@@ -8,7 +8,7 @@ import static cool.scx.reflect.ReflectSupport.*;
 import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 import static java.lang.reflect.AccessFlag.*;
 
-/// ClassInfoImpl (非线程安全)
+/// ClassInfoImpl
 ///
 /// @author scx567888
 /// @version 0.0.1
