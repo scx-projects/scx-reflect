@@ -25,8 +25,8 @@ final class PrimitiveTypeInfoImpl implements PrimitiveTypeInfo {
         if (object == this) {
             return true;
         }
-        if (object instanceof PrimitiveTypeInfoImpl that) {
-            return rawClass == that.rawClass;
+        if (object instanceof PrimitiveTypeInfoImpl o) {
+            return rawClass == o.rawClass;
         }
         return false;
     }
