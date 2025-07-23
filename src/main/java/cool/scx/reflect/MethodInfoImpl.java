@@ -31,6 +31,8 @@ final class MethodInfoImpl implements MethodInfo {
     // 锁
     private final Lock LOCK;
 
+    private final int hashCode;
+
     private volatile boolean superMethodLoaded;
     private volatile MethodInfo superMethod;
 
@@ -48,6 +50,7 @@ final class MethodInfoImpl implements MethodInfo {
         this.parameters = _findParameters(this.rawMethod, this);
         this.returnType = typeOfAny(this.rawMethod.getGenericReturnType(), new TypeResolutionContext(this.declaringClass.bindings()));
         this.LOCK = new ReentrantLock();
+        this.hashCode = this._hashCode();
     }
 
     @Override
@@ -122,21 +125,25 @@ final class MethodInfoImpl implements MethodInfo {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o instanceof MethodInfoImpl that) {
-            return rawMethod.equals(that.rawMethod);
+        if (object instanceof MethodInfoImpl o) {
+            return rawMethod.equals(o.rawMethod);
         }
         return false;
     }
 
-    @Override
-    public int hashCode() {
+    private int _hashCode() {
         int result = MethodInfoImpl.class.hashCode();
         result = 31 * result + rawMethod.hashCode();
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 
     @Override
