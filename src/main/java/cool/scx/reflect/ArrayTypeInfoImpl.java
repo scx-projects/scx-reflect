@@ -47,8 +47,8 @@ final class ArrayTypeInfoImpl implements ArrayTypeInfo {
         if (object == this) {
             return true;
         }
-        if (object instanceof ArrayTypeInfoImpl that) {
-            return componentType.equals(that.componentType);
+        if (object instanceof ArrayTypeInfoImpl o) {
+            return componentType.equals(o.componentType);
         }
         return false;
     }
