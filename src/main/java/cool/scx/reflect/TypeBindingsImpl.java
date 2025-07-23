@@ -22,7 +22,7 @@ final class TypeBindingsImpl implements TypeBindings {
         // 此处我们假设 typeVariables 和 typeInfos 是长度相等 顺序正确对应的
         this.typeVariables = typeVariables;
         this.typeInfos = typeInfos;
-        this.hashCode = _hashCode();
+        this.hashCode = this._hashCode();
     }
 
     @Override
