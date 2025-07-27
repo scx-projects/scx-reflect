@@ -120,7 +120,7 @@ final class MethodInfoImpl implements MethodInfo {
                 LOCK.unlock();
             }
         }
-        return superMethods;
+        return superMethods.clone();
     }
 
     @Override
