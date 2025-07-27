@@ -19,26 +19,6 @@ public class AllMethodsTest {
         Assert.assertEquals(methodInfos.length, 13);
     }
 
-    interface I1 {
-        default void hello() {
-            System.out.println("I1 hello");
-        }
-    }
-
-    interface I2 {
-        default void hello() {
-            System.out.println("I2 hello");
-        }
-    }
-
-    class C implements I1, I2 {
-        @Override
-        public void hello() {
-            I1.super.hello();
-        }
-        // 没有重写hello()
-    }
-
 
     interface A {
         void bbb();
@@ -50,7 +30,7 @@ public class AllMethodsTest {
         }
     }
 
-    static class Cc implements A, B {
+    static class C implements A, B {
 
     }
     
