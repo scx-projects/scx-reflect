@@ -328,9 +328,8 @@ final class ReflectSupport {
         var superClass = classInfo.superClass();
         if (superClass != null) {
             for (var m : superClass.allMethods()) {
-                if (!overridden.contains(m)) {
-                    result.add(m);
-                }
+                result.add(m);
+                addAll(overridden, m.superMethods());
             }
         }
 
@@ -338,11 +337,12 @@ final class ReflectSupport {
         var interfaces = classInfo.interfaces();
         for (var i : interfaces) {
             for (var m : i.allMethods()) {
-                if (!overridden.contains(m)) {
-                    result.add(m);
-                }
+                result.add(m);
+                addAll(overridden, m.superMethods());
             }
         }
+        // 统一移除
+        result.removeAll(overridden);
         return result.toArray(MethodInfo[]::new);
     }
 
