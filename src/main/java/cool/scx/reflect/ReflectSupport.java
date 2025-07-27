@@ -3,10 +3,7 @@ package cool.scx.reflect;
 import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Executable;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
@@ -328,9 +325,8 @@ final class ReflectSupport {
         var superClass = classInfo.superClass();
         if (superClass != null) {
             for (var m : superClass.allMethods()) {
-                if (!overridden.contains(m)) {
-                    result.add(m);
-                }
+                result.add(m);
+                addAll(overridden, m.superMethods());
             }
         }
 
@@ -338,11 +334,12 @@ final class ReflectSupport {
         var interfaces = classInfo.interfaces();
         for (var i : interfaces) {
             for (var m : i.allMethods()) {
-                if (!overridden.contains(m)) {
-                    result.add(m);
-                }
+                result.add(m);
+                addAll(overridden, m.superMethods());
             }
         }
+        // 统一移除
+        result.removeAll(overridden);
         return result.toArray(MethodInfo[]::new);
     }
 
