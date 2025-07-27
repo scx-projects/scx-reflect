@@ -320,7 +320,7 @@ final class ReflectSupport {
         // 1. 添加当前类声明的方法，并记录它们覆盖的父方法
         for (var method : classInfo.methods()) {
             result.add(method);
-            // 因为是递归展开的 所以添加当前层即可
+            // 因为是递归展开的 所以添加当前层 superMethods 即可, 无需添加 allSuperMethods
             addAll(overridden, method.superMethods());
         }
 
