@@ -228,13 +228,16 @@ final class ReflectSupport {
         return allFieldInfos.toArray(FieldInfo[]::new);
     }
 
-    public static MethodInfo _findSuperMethod(MethodInfo methodInfo) {
+    public static MethodInfo[] _findSuperMethods(MethodInfo methodInfo) {
         //静态方法不存在被重写的可能, 所以不可能拥有 superMethod 
         if (methodInfo.isStatic()) {
-            return null;
+            return new MethodInfo[]{};
         }
 
+        var result = new ArrayList<MethodInfo>();
+
         // 先查找父类
+        root:
         for (var i : methodInfo.declaringClass().allSuperClasses()) {
             for (var superMethod : i.methods()) {
                 //静态方法 和 final 不可能是 superMethod 直接跳过
@@ -243,13 +246,21 @@ final class ReflectSupport {
                 }
                 // 只查找第一次匹配的方法
                 if (isOverride(methodInfo, superMethod)) {
-                    return superMethod;
+                    result.add(superMethod);
+                    //父类是单继承的, 所以一旦匹配成功一次就不需要再向上找了
+                    break root;
                 }
             }
         }
 
+        // 记录访问过的接口
+        var needSkip = new HashSet<ClassInfo>();
+
         // 再查找接口
         for (var i : methodInfo.declaringClass().allInterfaces()) {
+            if (needSkip.contains(i)) {
+                continue;
+            }
             for (var superMethod : i.methods()) {
                 //静态方法 和 final 不可能是 superMethod 直接跳过
                 if (superMethod.isStatic() || superMethod.isFinal()) {
@@ -257,11 +268,49 @@ final class ReflectSupport {
                 }
                 // 只查找第一次匹配的方法
                 if (isOverride(methodInfo, superMethod)) {
-                    return superMethod;
+                    result.add(superMethod);
+                    // 一旦找到, 这表明 当前接口的 整个继承链条中 的所有的接口都不需要继续查找了
+                    addAll(needSkip, i.allInterfaces());
+                    break;
                 }
             }
         }
-        return null;
+
+        return result.toArray(MethodInfo[]::new);
+    }
+
+    /// 写法参考 _findAllInterfaces
+    public static MethodInfo[] _findAllSuperMethods(MethodInfo methodInfo) {
+        // 这里需要 进行广度遍历 (BFS), 但是我们不使用传统的队列方式,
+        // 而是使用 类似递归深度遍历 + 行转列, 
+        // 主要原因是为了 通过调用 父接口的 allSuperMethods 来激活整个继承链条的 allSuperMethods 缓存
+        // 此方法不处理 环形依赖, 因为 java 的编译期 已经保证了不可能存在 环形依赖
+
+        // 1, 使用 LinkedHashSet 保证去重
+        var result = new LinkedHashSet<MethodInfo>();
+        // 2, 先将当前层级接口添加进去
+        var superMethods = methodInfo.superMethods();
+        addAll(result, superMethods);
+        // 3, 获取所有父方法的 所有方法, 同时找出最大的层级深度 
+        var temp = new MethodInfo[superMethods.length][];
+        int maxDepth = 0;
+        for (int i = 0; i < superMethods.length; i = i + 1) {
+            temp[i] = superMethods[i].allSuperMethods();
+            if (temp[i].length > maxDepth) {
+                maxDepth = temp[i].length;
+            }
+        }
+
+        // 4, 按 "行转列" 遍历, 逐层加入接口
+        for (int level = 0; level < maxDepth; level = level + 1) {
+            for (var methodInfos : temp) {
+                if (level < methodInfos.length) {
+                    result.add(methodInfos[level]);
+                }
+            }
+        }
+
+        return result.toArray(MethodInfo[]::new);
     }
 
     public static MethodInfo[] _findAllMethods(ClassInfo classInfo) {
@@ -271,9 +320,8 @@ final class ReflectSupport {
         // 1. 添加当前类声明的方法，并记录它们覆盖的父方法
         for (var method : classInfo.methods()) {
             result.add(method);
-            if (method.superMethod() != null) {
-                overridden.add(method.superMethod());
-            }
+            // 因为是递归展开的 所以添加当前层 superMethods 即可, 无需添加 allSuperMethods
+            addAll(overridden, method.superMethods());
         }
 
         // 2. 添加父类的方法（排除被覆盖的）

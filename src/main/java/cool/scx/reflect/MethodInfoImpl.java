@@ -33,8 +33,8 @@ final class MethodInfoImpl implements MethodInfo {
 
     private final int hashCode;
 
-    private volatile boolean superMethodLoaded;
-    private volatile MethodInfo superMethod;
+    private volatile MethodInfo[] superMethods;
+    private volatile MethodInfo[] allSuperMethods;
 
     MethodInfoImpl(Method method, ClassInfo declaringClass) {
         this.rawMethod = method;
@@ -109,19 +109,33 @@ final class MethodInfoImpl implements MethodInfo {
     }
 
     @Override
-    public MethodInfo superMethod() {
-        if (!superMethodLoaded) {
+    public MethodInfo[] superMethods() {
+        if (superMethods == null) {
             LOCK.lock();
             try {
-                if (!superMethodLoaded) {
-                    superMethod = _findSuperMethod(this);
-                    superMethodLoaded = true;
+                if (superMethods == null) {
+                    superMethods = _findSuperMethods(this);
                 }
             } finally {
                 LOCK.unlock();
             }
         }
-        return superMethod;
+        return superMethods.clone();
+    }
+
+    @Override
+    public MethodInfo[] allSuperMethods() {
+        if (allSuperMethods == null) {
+            LOCK.lock();
+            try {
+                if (allSuperMethods == null) {
+                    allSuperMethods = _findAllSuperMethods(this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
+        }
+        return allSuperMethods.clone();
     }
 
     @Override
