@@ -34,7 +34,7 @@ public sealed interface MethodInfo extends ExecutableInfo permits MethodInfoImpl
     /// 返回值
     TypeInfo returnType();
 
-    /// 获取当前方法重写的父类的方法
+    /// 获取当前方法重写的父类的方法 (最近的一层)
     MethodInfo[] superMethods();
 
     /// 获取当前方法重写的所有方法 (广度遍历顺序)
