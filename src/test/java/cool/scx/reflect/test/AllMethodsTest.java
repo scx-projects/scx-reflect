@@ -33,5 +33,5 @@ public class AllMethodsTest {
     static class C implements A, B {
 
     }
-    
+
 }
