@@ -119,19 +119,20 @@ public class MethodInfoTest {
         // 覆盖父类和接口foo
         @Override
         public void foo() {
-            
+
         }
 
         // 实现接口I2的方法
         @Override
         public void qux() {
-            
+
         }
-        
+
         // 子类自有方法
         public void childOnly() {
-            
-        } 
+
+        }
+
     }
 
 }

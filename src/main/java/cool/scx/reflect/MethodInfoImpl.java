@@ -110,10 +110,10 @@ final class MethodInfoImpl implements MethodInfo {
 
     @Override
     public MethodInfo[] superMethods() {
-        if (superMethods==null) {
+        if (superMethods == null) {
             LOCK.lock();
             try {
-                if (superMethods==null) {
+                if (superMethods == null) {
                     superMethods = _findSuperMethods(this);
                 }
             } finally {
