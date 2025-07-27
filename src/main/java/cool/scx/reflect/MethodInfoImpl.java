@@ -35,6 +35,7 @@ final class MethodInfoImpl implements MethodInfo {
 
     private volatile boolean superMethodLoaded;
     private volatile MethodInfo superMethod;
+    private volatile MethodInfo[] allSuperMethods;
 
     MethodInfoImpl(Method method, ClassInfo declaringClass) {
         this.rawMethod = method;
@@ -122,6 +123,21 @@ final class MethodInfoImpl implements MethodInfo {
             }
         }
         return superMethod;
+    }
+
+    @Override
+    public MethodInfo[] allSuperMethods() {
+        if (allSuperMethods == null) {
+            LOCK.lock();
+            try {
+                if (allSuperMethods == null) {
+                    allSuperMethods = _findAllSuperMethods(this);
+                }
+            } finally {
+                LOCK.unlock();
+            }
+        }
+        return allSuperMethods.clone();
     }
 
     @Override

@@ -264,6 +264,18 @@ final class ReflectSupport {
         return null;
     }
 
+    public static MethodInfo[] _findAllSuperMethods(MethodInfo methodInfo) {
+        var superMethod = methodInfo.superMethod();
+        if (superMethod == null) {
+            return new MethodInfo[]{};
+        } else {
+            var result = new ArrayList<MethodInfo>();
+            result.add(superMethod);
+            addAll(result, superMethod.allSuperMethods());
+            return result.toArray(MethodInfo[]::new);
+        }
+    }
+
     public static MethodInfo[] _findAllMethods(ClassInfo classInfo) {
         var result = new ArrayList<MethodInfo>();
         var overridden = new HashSet<MethodInfo>();
