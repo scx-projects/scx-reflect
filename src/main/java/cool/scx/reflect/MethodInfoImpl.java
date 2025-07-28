@@ -28,6 +28,8 @@ final class MethodInfoImpl implements MethodInfo {
     private final ParameterInfo[] parameters;
     private final TypeInfo returnType;
 
+    private final MethodSignature signature;
+
     // 锁
     private final Lock LOCK;
 
@@ -49,6 +51,7 @@ final class MethodInfoImpl implements MethodInfo {
         this.isDefault = this.rawMethod.isDefault();
         this.parameters = _findParameters(this.rawMethod, this);
         this.returnType = typeOfAny(this.rawMethod.getGenericReturnType(), new TypeResolutionContext(this.declaringClass.bindings()));
+        this.signature = new MethodSignature(this);
         this.LOCK = new ReentrantLock();
         this.hashCode = this._hashCode();
     }
@@ -106,6 +109,11 @@ final class MethodInfoImpl implements MethodInfo {
     @Override
     public TypeInfo returnType() {
         return returnType;
+    }
+
+    @Override
+    public MethodSignature signature() {
+        return signature;
     }
 
     @Override

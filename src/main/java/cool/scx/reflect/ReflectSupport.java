@@ -3,10 +3,7 @@ package cool.scx.reflect;
 import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Executable;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
@@ -418,25 +415,7 @@ final class ReflectSupport {
             return false;
         }
         // 方法签名也必须相同 不过此处判断的实际上是泛型擦除后的类型 
-        return _hasSameParameterErasedTypes(methodInfo, superMethod);
-    }
-
-    /// 判断的实际上是泛型擦除后的参数类型是否相同
-    private static boolean _hasSameParameterErasedTypes(ExecutableInfo rootMethod, ExecutableInfo candidateMethod) {
-        if (candidateMethod.parameters().length != rootMethod.parameters().length) {
-            return false;
-        }
-        var p1 = rootMethod.parameters();
-        var p2 = candidateMethod.parameters();
-        for (int i = 0; i < p1.length; i = i + 1) {
-            var p1Type = p1[i].parameterType();
-            var p2Type = p2[i].parameterType();
-            //这里 因为 java 泛型擦除 机制我们不能 比较带泛型的参数 而是应该比较 泛型擦除后的类型
-            if (p1Type.rawClass() != p2Type.rawClass()) {
-                return false;
-            }
-        }
-        return true;
+        return methodInfo.signature().equals(superMethod.signature());
     }
 
 }

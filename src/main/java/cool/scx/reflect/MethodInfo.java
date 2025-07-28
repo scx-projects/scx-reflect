@@ -33,6 +33,9 @@ public sealed interface MethodInfo extends ExecutableInfo permits MethodInfoImpl
 
     /// 返回值
     TypeInfo returnType();
+    
+    /// 方法签名 (仅建议用来进行重载比较)
+    MethodSignature signature();
 
     /// 获取当前方法重写的父类的方法 (最近的一层)
     MethodInfo[] superMethods();
