@@ -129,14 +129,26 @@ final class ReflectSupport {
 
         // 1, 使用 LinkedHashSet 保证去重
         var result = new LinkedHashSet<ClassInfo>();
-        // 2, 先将当前层级接口添加进去
+        // 2, 我们需要查找所有父级 包括 superClass 和 interface
+        var superClass = classInfo.superClass();
         var interfaces = classInfo.interfaces();
+
+        ClassInfo[] parents;
+        if (superClass != null) {
+            // 合并父类和接口
+            parents = new ClassInfo[interfaces.length + 1];
+            parents[0] = superClass;
+            System.arraycopy(interfaces, 0, parents, 1, interfaces.length);
+        } else {
+            parents = classInfo.interfaces();
+        }
+        // 3, 先将当前层级接口添加进去
         addAll(result, interfaces);
-        // 3, 获取所有父接口的 所有接口, 同时找出最大的层级深度 
-        var temp = new ClassInfo[interfaces.length][];
+        // 4, 获取所有父接口的 所有接口, 同时找出最大的层级深度 
+        var temp = new ClassInfo[parents.length][];
         int maxDepth = 0;
-        for (int i = 0; i < interfaces.length; i = i + 1) {
-            temp[i] = interfaces[i].allInterfaces();
+        for (int i = 0; i < parents.length; i = i + 1) {
+            temp[i] = parents[i].allInterfaces();
             if (temp[i].length > maxDepth) {
                 maxDepth = temp[i].length;
             }
@@ -313,6 +325,7 @@ final class ReflectSupport {
         return result.toArray(MethodInfo[]::new);
     }
 
+    /// todo 这里需要我们正确模拟 java 的重写逻辑, 现在不正确
     public static MethodInfo[] _findAllMethods(ClassInfo classInfo) {
         var result = new ArrayList<MethodInfo>();
         var overridden = new HashSet<MethodInfo>();
@@ -401,31 +414,18 @@ final class ReflectSupport {
                 return false;
             }
         }
-
-        // 判断方法名
-        if (!superMethod.name().equals(methodInfo.name())) {
-            return false;
-        }
-        // 方法签名也必须相同 不过此处判断的实际上是泛型擦除后的类型 
-        return _hasSameParameterErasedTypes(methodInfo, superMethod);
+        // 方法签名也必须相同 
+        return methodInfo.signature().equals(superMethod.signature());
     }
 
-    /// 判断的实际上是泛型擦除后的参数类型是否相同
-    private static boolean _hasSameParameterErasedTypes(ExecutableInfo rootMethod, ExecutableInfo candidateMethod) {
-        if (candidateMethod.parameters().length != rootMethod.parameters().length) {
-            return false;
+    public static Class<?>[] _findParameterTypes(MethodInfo methodInfo) {
+        // 此处不能直接使用 Method.getParameterTypes(), 因为存在泛型擦除的问题
+        var parameterInfos = methodInfo.parameters();
+        var parameterTypes = new Class<?>[parameterInfos.length];
+        for (int i = 0; i < parameterInfos.length; i = i + 1) {
+            parameterTypes[i] = parameterInfos[i].parameterType().rawClass();
         }
-        var p1 = rootMethod.parameters();
-        var p2 = candidateMethod.parameters();
-        for (int i = 0; i < p1.length; i = i + 1) {
-            var p1Type = p1[i].parameterType();
-            var p2Type = p2[i].parameterType();
-            //这里 因为 java 泛型擦除 机制我们不能 比较带泛型的参数 而是应该比较 泛型擦除后的类型
-            if (p1Type.rawClass() != p2Type.rawClass()) {
-                return false;
-            }
-        }
-        return true;
+        return parameterTypes;
     }
 
 }
