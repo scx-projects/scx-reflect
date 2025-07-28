@@ -129,19 +129,25 @@ final class ReflectSupport {
 
         // 1, 使用 LinkedHashSet 保证去重
         var result = new LinkedHashSet<ClassInfo>();
-        // 2, 先将当前层级接口添加进去
-        var parents = new ArrayList<ClassInfo>();
-        if (classInfo.superClass() != null) {
-            parents.add(classInfo.superClass());
-        }
+        // 2, 我们需要查找所有父级 包括 superClass 和 interface
+        var superClass = classInfo.superClass();
         var interfaces = classInfo.interfaces();
-        addAll(parents, interfaces);
+
+        ClassInfo[] parents;
+        if (superClass != null) {
+            parents = new ClassInfo[interfaces.length + 1];
+            parents[0] = superClass;
+            System.arraycopy(interfaces, 0, parents, 1, interfaces.length);
+        } else {
+            parents = classInfo.interfaces();
+        }
+        // 3, 先将当前层级接口添加进去
         addAll(result, interfaces);
-        // 3, 获取所有父接口的 所有接口, 同时找出最大的层级深度 
-        var temp = new ClassInfo[parents.size()][];
+        // 4, 获取所有父接口的 所有接口, 同时找出最大的层级深度 
+        var temp = new ClassInfo[parents.length][];
         int maxDepth = 0;
-        for (int i = 0; i < parents.size(); i = i + 1) {
-            temp[i] = parents.get(i).allInterfaces();
+        for (int i = 0; i < parents.length; i = i + 1) {
+            temp[i] = parents[i].allInterfaces();
             if (temp[i].length > maxDepth) {
                 maxDepth = temp[i].length;
             }
