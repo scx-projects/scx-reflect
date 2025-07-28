@@ -21,6 +21,7 @@ public class AllInterfaceTest {
         Assert.assertNotNull(superType);
     }
 
+
     public static class A extends B {
 
     }
