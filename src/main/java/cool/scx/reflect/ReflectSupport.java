@@ -392,9 +392,7 @@ final class ReflectSupport {
         methodInfos.removeAll(override);
 
         // 1. 先找出所有具体（非抽象）方法
-        List<MethodInfo> concreteMethods = methodInfos.stream()
-                .filter(m -> !m.isAbstract())
-                .toList();
+        List<MethodInfo> concreteMethods = methodInfos.stream().filter(m -> !m.isAbstract()).toList();
 
         if (!concreteMethods.isEmpty()) {
             // 如果有具体实现，抽象方法和接口默认方法被覆盖，直接返回具体实现（可能多个，表示冲突）
