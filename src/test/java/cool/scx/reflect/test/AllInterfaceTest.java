@@ -2,7 +2,7 @@ package cool.scx.reflect.test;
 
 import cool.scx.reflect.ClassInfo;
 import cool.scx.reflect.ScxReflect;
-import cool.scx.reflect.TypeInfo;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 public class AllInterfaceTest {
@@ -13,14 +13,15 @@ public class AllInterfaceTest {
 
     @Test
     public static void test1() {
-        var typeInfo =(ClassInfo) ScxReflect.typeOf(A.class);
+        var typeInfo = (ClassInfo) ScxReflect.typeOf(A.class);
         ClassInfo[] classInfos = typeInfo.allInterfaces();
         ClassInfo superType = typeInfo.findSuperType(C.class);
 
-        System.out.println();
+        Assert.assertEquals(classInfos.length, 1);
+        Assert.assertNotNull(superType);
     }
 
-    public static class A extends B{
+    public static class A extends B {
 
     }
 
@@ -31,5 +32,5 @@ public class AllInterfaceTest {
     public interface C {
 
     }
-    
+
 }
