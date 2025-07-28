@@ -11,6 +11,7 @@ public class AllMethodsTest {
     public static void main(String[] args) {
         test1();
         test2();
+        test3();
     }
 
     @Test
@@ -24,7 +25,15 @@ public class AllMethodsTest {
     public static void test2() {
         var typeInfo = (ClassInfo) ScxReflect.typeOf(K.class);
         MethodInfo[] methodInfos = typeInfo.allMethods();
-        System.out.println();
+        Assert.assertEquals(methodInfos.length, 13);
+    }
+
+
+    @Test
+    public static void test3() {
+        var typeInfo = (ClassInfo) ScxReflect.typeOf(OOO.class);
+        MethodInfo[] methodInfos = typeInfo.allMethods();
+        Assert.assertEquals(methodInfos.length, 2);
     }
 
 
@@ -59,5 +68,19 @@ public class AllMethodsTest {
     static class K extends J implements H {
 
     }
+
+
+    interface O {
+        void ooo();
+    }
+
+    interface O1  {
+        void ooo();
+    }
+
+    interface OOO extends  O, O1 {
+
+    }
+    
 
 }
