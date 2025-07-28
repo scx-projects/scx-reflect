@@ -325,8 +325,8 @@ final class ReflectSupport {
 
     /// 这里需要我们正确模拟 java 的重写逻辑
     public static MethodInfo[] _findAllMethods(ClassInfo classInfo) {
-        var staticMethods = new ArrayList<MethodInfo>();
-        var instanceMethods = new ArrayList<MethodInfo>();
+        var staticMethods = new LinkedHashSet<MethodInfo>();
+        var instanceMethods = new LinkedHashSet<MethodInfo>();
 
         // 1. 添加当前类声明的方法，并记录它们覆盖的父方法
         for (var method : classInfo.methods()) {
@@ -376,7 +376,7 @@ final class ReflectSupport {
             finalInstanceMethods.addAll(methodInfos);
         }
         // 合并
-        var result = new LinkedHashSet<MethodInfo>();
+        var result = new ArrayList<MethodInfo>();
         result.addAll(staticMethods);
         result.addAll(finalInstanceMethods);
         return result.toArray(MethodInfo[]::new);
@@ -394,9 +394,19 @@ final class ReflectSupport {
         // 1. 先找出所有具体（非抽象）方法
         List<MethodInfo> concreteMethods = methodInfos.stream().filter(m -> !m.isAbstract()).toList();
 
-        if (!concreteMethods.isEmpty()) {
+        if (concreteMethods.size() == 1) {
             // 如果有具体实现，抽象方法和接口默认方法被覆盖，直接返回具体实现（可能多个，表示冲突）
             return concreteMethods;
+        } else if (concreteMethods.size() > 1) {
+            // 这里只有可能是一个 实例方法和 一个 default 方法
+            for (var concreteMethod : concreteMethods) {
+                // 寻找不是 default 的方法 也就是实例方法
+                if (!concreteMethod.isDefault()) {
+                    return List.of(concreteMethod);
+                }
+            }
+            // 不可达异常, 未找到任何的 实例方法 这在正常情况下是不可能的 
+            throw new IllegalStateException("存在多个 default 方法, 但未找到任何实例方法.");
         }
 
         // 2. 否则全部是抽象方法，全部返回（接口多继承多抽象方法）
