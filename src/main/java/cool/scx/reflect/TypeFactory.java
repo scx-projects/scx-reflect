@@ -12,7 +12,7 @@ import static cool.scx.reflect.TypeBindingsImpl.EMPTY_BINDINGS;
 ///
 /// @author scx567888
 /// @version 0.0.1
-public final class TypeFactory {
+final class TypeFactory {
 
     // Key 可能是 Class, ParameterizedType, GenericArrayType, ArrayTypeInfo, ClassInfo
     // 其中 ParameterizedType 和 GenericArrayType 是存在 最终推导类型一致但是 本身的 equals 却不一致的情况
