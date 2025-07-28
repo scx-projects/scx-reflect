@@ -69,12 +69,6 @@
 
     <dependencies>
 
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-collections4</artifactId>
-            <version>4.4</version>
-        </dependency>
-
         <!-- TestNG 测试包 -->
         <dependency>
             <groupId>org.testng</groupId>
