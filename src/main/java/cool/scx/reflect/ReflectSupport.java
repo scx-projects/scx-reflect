@@ -3,7 +3,10 @@ package cool.scx.reflect;
 import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Executable;
 import java.lang.reflect.ParameterizedType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
@@ -132,6 +135,7 @@ final class ReflectSupport {
 
         ClassInfo[] parents;
         if (superClass != null) {
+            // 合并父类和接口
             parents = new ClassInfo[interfaces.length + 1];
             parents[0] = superClass;
             System.arraycopy(interfaces, 0, parents, 1, interfaces.length);
@@ -321,6 +325,7 @@ final class ReflectSupport {
         return result.toArray(MethodInfo[]::new);
     }
 
+    ///todo 这里需要我们正确模拟 java 的重写逻辑, 现在不正确
     public static MethodInfo[] _findAllMethods(ClassInfo classInfo) {
         var result = new ArrayList<MethodInfo>();
         var overridden = new HashSet<MethodInfo>();
@@ -411,6 +416,16 @@ final class ReflectSupport {
         }
         // 方法签名也必须相同 
         return methodInfo.signature().equals(superMethod.signature());
+    }
+
+    public static Class<?>[] _findParameterTypes(MethodInfo methodInfo) {
+        // 此处不能直接使用 Method.getParameterTypes(), 因为存在泛型擦除的问题
+        var parameterInfos = methodInfo.parameters();
+        var parameterTypes = new Class<?>[parameterInfos.length];
+        for (int i = 0; i < parameterInfos.length; i = i + 1) {
+            parameterTypes[i] = parameterInfos[i].parameterType().rawClass();
+        }
+        return parameterTypes;
     }
 
 }

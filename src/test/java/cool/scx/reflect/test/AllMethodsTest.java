@@ -42,9 +42,8 @@ public class AllMethodsTest {
 
     }
 
-    
+
     // 特例的重写方式
-    
     interface H {
         void hasXXX();
     }
