@@ -3,10 +3,8 @@ package cool.scx.reflect;
 import java.lang.reflect.AccessFlag;
 import java.lang.reflect.Executable;
 import java.lang.reflect.ParameterizedType;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static cool.scx.reflect.AccessModifier.*;
 import static cool.scx.reflect.ClassKind.*;
@@ -325,38 +323,86 @@ final class ReflectSupport {
         return result.toArray(MethodInfo[]::new);
     }
 
-    /// todo 这里需要我们正确模拟 java 的重写逻辑, 现在不正确
+    /// 这里需要我们正确模拟 java 的重写逻辑
     public static MethodInfo[] _findAllMethods(ClassInfo classInfo) {
-        var result = new ArrayList<MethodInfo>();
-        var overridden = new HashSet<MethodInfo>();
+        var staticMethods = new ArrayList<MethodInfo>();
+        var instanceMethods = new ArrayList<MethodInfo>();
 
         // 1. 添加当前类声明的方法，并记录它们覆盖的父方法
         for (var method : classInfo.methods()) {
-            result.add(method);
-            // 因为是递归展开的 所以添加当前层 superMethods 即可, 无需添加 allSuperMethods
-            addAll(overridden, method.superMethods());
+            if (method.isStatic()) {
+                staticMethods.add(method);
+            } else {
+                instanceMethods.add(method);
+            }
         }
 
         // 2. 添加父类的方法（排除被覆盖的）
         var superClass = classInfo.superClass();
         if (superClass != null) {
-            for (var m : superClass.allMethods()) {
-                result.add(m);
-                addAll(overridden, m.superMethods());
+            for (var method : superClass.allMethods()) {
+                if (method.isStatic()) {
+                    staticMethods.add(method);
+                } else {
+                    instanceMethods.add(method);
+                }
             }
         }
 
         // 3. 添加接口的方法（排除被覆盖的）
         var interfaces = classInfo.interfaces();
         for (var i : interfaces) {
-            for (var m : i.allMethods()) {
-                result.add(m);
-                addAll(overridden, m.superMethods());
+            for (MethodInfo method : i.allMethods()) {
+                if (method.isStatic()) {
+                    staticMethods.add(method);
+                } else {
+                    instanceMethods.add(method);
+                }
             }
         }
-        // 统一移除
-        result.removeAll(overridden);
+
+        List<MethodInfo> finalInstanceMethods = new ArrayList<>();
+        // 这里我们需要对 instanceMethod 进行覆写检查
+        // 先分组
+        var map = instanceMethods.stream().collect(Collectors.groupingBy(MethodInfo::signature));
+        for (var e : map.entrySet()) {
+            var value = e.getValue();
+            // 只有以一个 无需检查
+            if (value.size() == 1) {
+                finalInstanceMethods.addAll(value);
+                continue;
+            }
+            var methodInfos = _selectMethods(value);
+            finalInstanceMethods.addAll(methodInfos);
+        }
+        // 合并
+        var result = new LinkedHashSet<MethodInfo>();
+        result.addAll(staticMethods);
+        result.addAll(finalInstanceMethods);
         return result.toArray(MethodInfo[]::new);
+    }
+
+    /// 在一众方法中寻找 最符合的方法
+    public static List<MethodInfo> _selectMethods(List<MethodInfo> methodInfos) {
+        // 先把所有被重写的方法全部移除
+        var override = new ArrayList<MethodInfo>();
+        for (var methodInfo : methodInfos) {
+            addAll(override, methodInfo.allSuperMethods());
+        }
+        methodInfos.removeAll(override);
+
+        // 1. 先找出所有具体（非抽象）方法
+        List<MethodInfo> concreteMethods = methodInfos.stream()
+                .filter(m -> !m.isAbstract())
+                .toList();
+
+        if (!concreteMethods.isEmpty()) {
+            // 如果有具体实现，抽象方法和接口默认方法被覆盖，直接返回具体实现（可能多个，表示冲突）
+            return concreteMethods;
+        }
+
+        // 2. 否则全部是抽象方法，全部返回（接口多继承多抽象方法）
+        return methodInfos;
     }
 
     /// 返回当前 ClassInfo 所表示的枚举类的 "真实" 枚举类型。
