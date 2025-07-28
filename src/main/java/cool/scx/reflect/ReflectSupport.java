@@ -409,12 +409,7 @@ final class ReflectSupport {
                 return false;
             }
         }
-
-        // 判断方法名
-        if (!superMethod.name().equals(methodInfo.name())) {
-            return false;
-        }
-        // 方法签名也必须相同 不过此处判断的实际上是泛型擦除后的类型 
+        // 方法签名也必须相同 
         return methodInfo.signature().equals(superMethod.signature());
     }
 
