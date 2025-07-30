@@ -1,5 +1,6 @@
-# SCX Reflect
-
+<p align="center">
+    <img src="https://scx.cool/scx-logo/scx-reflect-logo.svg" width="300px"  alt="scx-reflect-logo"/>
+</p>
 <p align="center">
     <a target="_blank" href="https://github.com/scx-projects/scx-reflect/actions/workflows/ci.yml">
         <img src="https://github.com/scx-projects/scx-reflect/actions/workflows/ci.yml/badge.svg" alt="CI"/>
